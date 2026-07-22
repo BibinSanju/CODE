@@ -277,35 +277,6 @@ app.post('/execute/submit', async (c) => {
 
     for (let i = 0; i < testCases.length; i++) {
       const tc = testCases[i]
-      let wrapperCode = code
-
-      // Inject wrapper based on language to call solution function and print output
-      if (language === 'javascript') {
-        wrapperCode = `
-${code}
-const input = ${JSON.stringify(tc.input)};
-const result = solution(input.nums, input.target);
-console.log(JSON.stringify(result));
-`
-      } else if (language === 'python') {
-        wrapperCode = `
-import json
-${code}
-input_data = json.loads('${JSON.stringify(tc.input)}')
-try:
-    if 'nums' in input_data and 'target' in input_data:
-        result = solution(input_data['nums'], input_data['target'])
-    else:
-        result = solution(**input_data)
-    print(json.dumps(result))
-except Exception as e:
-    import traceback
-    print("Error:", str(e))
-    traceback.print_exc()
-`
-      } else {
-        return c.json({ success: false, error: 'Test execution is currently only supported for JavaScript and Python.' })
-      }
 
       const EXECUTOR_URL = process.env.EXECUTOR_URL || 'https://my-free-executor.onrender.com';
       const response = await fetch(`${EXECUTOR_URL}/execute`, {
@@ -313,7 +284,8 @@ except Exception as e:
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           language: language,
-          code: wrapperCode
+          code: code, // Pass the exact code the user wrote
+          input: tc.input // Send the Standard IO input string
         })
       })
 
@@ -322,24 +294,19 @@ except Exception as e:
         return c.json({ success: false, error: 'Execution Error: ' + result.output }, 500)
       }
 
-      const outputStr = result.output?.trim()
-      let actualOutput = outputStr
+      const actualOutput = result.output?.trim() || ""
+      const expectedStr = (typeof tc.expectedOutput === 'string' ? tc.expectedOutput : JSON.stringify(tc.expectedOutput)).trim()
 
-      try {
-        if (outputStr) actualOutput = JSON.parse(outputStr)
-      } catch (e) { }
-
-      // Compare arrays/objects safely
-      const passed = JSON.stringify(actualOutput) === JSON.stringify(tc.expectedOutput)
+      const passed = actualOutput === expectedStr
       if (!passed) allPassed = false
 
       results.push({
         testCase: i + 1,
         input: tc.input,
-        expectedOutput: tc.expectedOutput,
+        expectedOutput: expectedStr,
         actualOutput,
         passed,
-        error: (actualOutput && typeof actualOutput === 'string' && actualOutput.includes('Error:')) ? actualOutput : undefined
+        error: undefined
       })
     }
 

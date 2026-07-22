@@ -19,11 +19,11 @@ interface Question {
 }
 
 const LANGUAGES = [
-  { id: 'javascript', name: 'JavaScript', version: '18.15.0', defaultCode: 'function solution(nums, target) {\n  // Write your code here\n}\n' },
-  { id: 'python', name: 'Python', version: '3.10.0', defaultCode: 'def solution(nums, target):\n    # Write your code here\n    pass\n' },
-  { id: 'java', name: 'Java', version: '15.0.2', defaultCode: 'class Main {\n    public static void main(String[] args) {\n        // Write your code here\n    }\n}\n' },
-  { id: 'cpp', name: 'C++', version: '10.2.0', defaultCode: '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}\n' },
-  { id: 'c', name: 'C', version: '10.2.0', defaultCode: '#include <stdio.h>\n\nint main() {\n    // Write your code here\n    return 0;\n}\n' }
+  { id: 'javascript', name: 'JavaScript', version: '18.15.0', defaultCode: '' },
+  { id: 'python', name: 'Python', version: '3.10.0', defaultCode: '' },
+  { id: 'java', name: 'Java', version: '15.0.2', defaultCode: '' },
+  { id: 'cpp', name: 'C++', version: '10.2.0', defaultCode: '' },
+  { id: 'c', name: 'C', version: '10.2.0', defaultCode: '' }
 ];
 
 export default function Workspace() {
@@ -151,8 +151,8 @@ export default function Workspace() {
                   <h3 className="mb-4 text-lg font-bold">Examples:</h3>
                   {(question.testCases as any[]).slice(0, 2).map((tc, index) => (
                     <div key={index} className="example-box mb-4 p-4 glass-panel rounded-md">
-                      <p className="mb-2"><strong>Input:</strong> <code>{JSON.stringify(tc.input)}</code></p>
-                      <p><strong>Output:</strong> <code>{JSON.stringify(tc.expectedOutput)}</code></p>
+                      <div className="mb-2"><strong>Input:</strong> <pre className="mt-1 p-2 bg-black bg-opacity-30 rounded-md text-sm whitespace-pre-wrap">{tc.input}</pre></div>
+                      <div><strong>Output:</strong> <pre className="mt-1 p-2 bg-black bg-opacity-30 rounded-md text-sm whitespace-pre-wrap">{tc.expectedOutput}</pre></div>
                     </div>
                   ))}
                 </div>
@@ -231,9 +231,9 @@ export default function Workspace() {
                           return (
                             <div key={i} className={`test-case-card ${tr.passed ? 'passed' : 'failed'}`}>
                               <h4>Test Case {tr.testCase} {tr.passed ? '✅' : '❌'}</h4>
-                              <div className="tc-row"><strong>Input:</strong> <code>{JSON.stringify(tr.input)}</code></div>
-                              <div className="tc-row"><strong>Expected:</strong> <code>{JSON.stringify(tr.expectedOutput)}</code></div>
-                              <div className="tc-row"><strong>Actual:</strong> <code>{JSON.stringify(tr.actualOutput)}</code></div>
+                              <div className="tc-row"><strong>Input:</strong> <pre className="inline-block align-top mt-1 p-2 bg-black bg-opacity-30 rounded-md text-xs whitespace-pre-wrap">{tr.input}</pre></div>
+                              <div className="tc-row"><strong>Expected:</strong> <pre className="inline-block align-top mt-1 p-2 bg-black bg-opacity-30 rounded-md text-xs whitespace-pre-wrap">{tr.expectedOutput}</pre></div>
+                              <div className="tc-row"><strong>Actual:</strong> <pre className="inline-block align-top mt-1 p-2 bg-black bg-opacity-30 rounded-md text-xs whitespace-pre-wrap">{tr.actualOutput}</pre></div>
                               {tr.error && <div className="error-text">Error: {tr.error}</div>}
                             </div>
                           );
@@ -242,7 +242,7 @@ export default function Workspace() {
                             <div key={i} className="test-case-card failed">
                               <h4>Hidden Test Case {tr.testCase} ❌</h4>
                               <div className="tc-row text-muted italic">Input and Expected Output are hidden.</div>
-                              <div className="tc-row"><strong>Your Output:</strong> <code>{JSON.stringify(tr.actualOutput)}</code></div>
+                              <div className="tc-row"><strong>Your Output:</strong> <pre className="inline-block align-top mt-1 p-2 bg-black bg-opacity-30 rounded-md text-xs whitespace-pre-wrap">{tr.actualOutput}</pre></div>
                               {tr.error && <div className="error-text">Error: {tr.error}</div>}
                             </div>
                           );
