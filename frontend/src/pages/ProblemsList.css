@@ -1,0 +1,136 @@
+.problems-container {
+  padding-top: 40px;
+  padding-bottom: 60px;
+}
+
+.problems-header {
+  margin-bottom: 32px;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.page-subtitle {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+}
+
+.problems-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.problems-table th {
+  padding: 16px 24px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.problems-table td {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.problem-row {
+  transition: background-color 0.2s ease;
+}
+
+.problem-row:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.problem-row:last-child td {
+  border-bottom: none;
+}
+
+.status-col {
+  width: 80px;
+  text-align: center;
+}
+
+.status-icon.pending {
+  color: var(--text-muted);
+}
+
+.status-icon.solved {
+  color: var(--success);
+}
+
+.problem-title-link {
+  font-weight: 500;
+  color: var(--text-main);
+  font-size: 1.05rem;
+}
+
+.problem-title-link:hover {
+  color: var(--accent-primary);
+}
+
+.category-tag {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.difficulty-tag {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.difficulty-tag.easy { color: var(--success); }
+.difficulty-tag.medium { color: var(--warning); }
+.difficulty-tag.hard { color: var(--error); }
+
+.error-banner {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  gap: 12px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.loading-state {
+  padding: 60px 0;
+  gap: 16px;
+  color: var(--text-secondary);
+  flex-direction: column;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--accent-primary);
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 24px !important;
+  color: var(--text-muted);
+}

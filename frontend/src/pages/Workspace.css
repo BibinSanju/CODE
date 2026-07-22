@@ -1,0 +1,175 @@
+.workspace-container {
+  height: calc(100vh - 80px); /* 80px is approx navbar height */
+  padding: 16px;
+  overflow: hidden;
+}
+
+.workspace-loading {
+  height: calc(100vh - 80px);
+}
+
+.split-wrapper {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.vertical-split-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.gutter {
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+}
+
+.gutter.gutter-horizontal {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjbd5MgAQYAAyWQcVy/HbbQAAAABJRU5ErkJggg==');
+  cursor: col-resize;
+  width: 8px !important;
+  margin: 0 4px;
+}
+
+.gutter.gutter-vertical {
+  background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyCB2iAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFBgFcgAQG/cAAQ8mGAAAAAASUVORK5CYII=');
+  cursor: row-resize;
+  height: 8px !important;
+  margin: 4px 0;
+}
+
+.gutter:hover {
+  background-color: var(--accent-primary);
+}
+
+.problem-pane, .editor-container, .console-container {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pane-header {
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.pane-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.problem-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.problem-meta {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.problem-description {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-main);
+}
+
+/* Base styles for HTML content coming from scraper */
+.problem-description p { margin-bottom: 16px; }
+.problem-description pre {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 6px;
+  margin: 16px 0;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+}
+.problem-description code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.editor-pane {
+  height: 100%;
+}
+
+.editor-lang-selector {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: 6px;
+}
+
+.mr-2 {
+  margin-right: 6px;
+}
+
+.btn-submit {
+  background-color: var(--success);
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-submit:hover {
+  background-color: #059669;
+}
+
+.btn-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.monaco-wrapper {
+  flex: 1;
+  overflow: hidden;
+}
+
+.console-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.console-output {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  color: var(--text-main);
+}
+
+.console-output pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
