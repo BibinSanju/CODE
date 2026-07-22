@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Dashboard from './pages/Dashboard';
+import CategoryView from './pages/CategoryView';
 import ProblemsList from './pages/ProblemsList';
 import Workspace from './pages/Workspace';
 import Profile from './pages/Profile';
@@ -17,14 +19,25 @@ function App() {
         <Navbar />
         <main>
           <Routes>
-            <Route path="/" element={<Navigate to="/problems" replace />} />
+            <Route 
+              path="/" 
+              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />} 
+            />
             <Route 
               path="/login" 
-              element={isAuthenticated ? <Navigate to="/problems" replace /> : <Login />} 
+              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} 
             />
             <Route 
               path="/signup" 
-              element={isAuthenticated ? <Navigate to="/problems" replace /> : <Signup />} 
+              element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Signup />} 
+            />
+            <Route 
+              path="/dashboard" 
+              element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />} 
+            />
+            <Route 
+              path="/category/:name" 
+              element={isAuthenticated ? <CategoryView /> : <Navigate to="/login" replace />} 
             />
             <Route path="/problems" element={<ProblemsList />} />
             <Route path="/problems/:id" element={<Workspace />} />

@@ -17,7 +17,7 @@ export default function Navbar() {
       <div className="container flex-between">
         <Link to="/" className="nav-brand flex-center">
           <Code2 size={28} className="brand-icon text-gradient" />
-          <span className="brand-text">IntelX Leet</span>
+          <span className="brand-text">IntelX</span>
         </Link>
         
         <div className="nav-links flex-center">

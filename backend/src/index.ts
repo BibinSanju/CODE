@@ -115,36 +115,83 @@ app.get('/users/:id', async (c) => {
     const uniqueSolvedIds = new Set(passedSubmissions.map(sub => sub.questionId))
     const totalSolved = uniqueSolvedIds.size
 
-    // 2. Category Breakdown (DSA, DB, ML, SysDesign)
-    const categoryStats = passedSubmissions.reduce((acc: any, sub) => {
-      const cat = sub.question.category
-      if (!acc[cat]) acc[cat] = new Set()
-      acc[cat].add(sub.questionId)
+    // 2. Difficulty Breakdown (Easy, Medium, Hard)
+    const difficultyStats = passedSubmissions.reduce((acc: any, sub) => {
+      const diff = sub.question.difficulty || 'Medium'
+      if (!acc[diff]) acc[diff] = new Set()
+      acc[diff].add(sub.questionId)
       return acc
     }, {})
 
-    // Format category stats for charts (e.g., { DSA: 5, DB: 2 })
-    const formattedCategories = Object.keys(categoryStats).reduce((acc: any, key) => {
-      acc[key] = categoryStats[key].size
-      return acc
-    }, {})
+    const formattedDifficulty = {
+      Easy: difficultyStats['Easy']?.size || 0,
+      Medium: difficultyStats['Medium']?.size || 0,
+      Hard: difficultyStats['Hard']?.size || 0,
+    }
 
     // 3. Calendar Data (Submissions grouped by date for heatmap)
-    const calendarData = passedSubmissions.reduce((acc: any, sub) => {
+    const calendarData = user.submissions.reduce((acc: any, sub) => {
       const dateString = sub.submittedAt.toISOString().split('T')[0]
       acc[dateString] = (acc[dateString] || 0) + 1
       return acc
     }, {})
 
+    // Calculate Max Streak and Total Active Days
+    const activeDays = Object.keys(calendarData).sort()
+    const totalActiveDays = activeDays.length
+    let maxStreak = 0
+    let currentStreak = 0
+    let previousDate: Date | null = null
+
+    for (const dateStr of activeDays) {
+      const date = new Date(dateStr)
+      if (!previousDate) {
+        currentStreak = 1
+      } else {
+        const diffTime = Math.abs(date.getTime() - previousDate.getTime())
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) 
+        if (diffDays === 1) {
+          currentStreak++
+        } else {
+          currentStreak = 1
+        }
+      }
+      maxStreak = Math.max(maxStreak, currentStreak)
+      previousDate = date
+    }
+
+    // Query for total questions
+    const totalQuestions = await prisma.question.count()
+    const totalEasy = await prisma.question.count({ where: { difficulty: 'Easy' } })
+    const totalMedium = await prisma.question.count({ where: { difficulty: 'Medium' } })
+    const totalHard = await prisma.question.count({ where: { difficulty: 'Hard' } })
+
+    // Pass all the user fields from the schema as well
     return c.json({
       success: true,
       data: {
         username: user.username,
         joinedAt: user.createdAt,
+        rank: user.rank,
+        reputation: user.reputation,
+        views: user.views,
+        discuss: user.discuss,
+        solution: user.solution,
+        contestRating: user.contestRating,
+        globalRanking: user.globalRanking,
+        attendedContests: user.attendedContests,
         stats: {
           totalSolved,
-          categoryBreakdown: formattedCategories,
-          calendarHeatmap: calendarData
+          difficultyBreakdown: formattedDifficulty,
+          calendarHeatmap: calendarData,
+          totalActiveDays,
+          maxStreak
+        },
+        totalAvailable: {
+          Total: totalQuestions,
+          Easy: totalEasy,
+          Medium: totalMedium,
+          Hard: totalHard
         },
         recentSubmissions: user.submissions.slice(-10)
       }
@@ -189,7 +236,7 @@ app.get('/questions', async (c) => {
   }
 })
 
-// Phase 3: Piston Code Execution API (Python, Java, etc.)
+// Phase 3: Piston Code Execution API (Raw Execution)
 app.post('/execute/code', async (c) => {
   try {
     const { language, version, code } = await c.req.json()
@@ -207,6 +254,107 @@ app.post('/execute/code', async (c) => {
   } catch (error) {
     console.error('Code execution error:', error)
     return c.json({ success: false, error: 'Code execution failed' }, 500)
+  }
+})
+
+// Phase 3: Piston Code Submit API (Runs against test cases)
+app.post('/execute/submit', async (c) => {
+  try {
+    const { questionId, language, version, code, userId, isRun } = await c.req.json()
+    
+    const question = await prisma.question.findUnique({ where: { id: questionId } })
+    if (!question || !question.testCases) {
+      return c.json({ success: false, error: 'Question or test cases not found' }, 404)
+    }
+
+    let testCases = question.testCases as any[]
+    if (isRun) {
+      testCases = testCases.slice(0, 2)
+    }
+    
+    const results = []
+    let allPassed = true
+
+    for (let i = 0; i < testCases.length; i++) {
+      const tc = testCases[i]
+      let wrapperCode = code
+
+      // Inject wrapper based on language to call solution function and print output
+      if (language === 'javascript') {
+        wrapperCode = `
+${code}
+const input = ${JSON.stringify(tc.input)};
+const result = solution(input.nums, input.target);
+console.log(JSON.stringify(result));
+`
+      } else if (language === 'python') {
+        wrapperCode = `
+import json
+${code}
+input_data = json.loads('${JSON.stringify(tc.input)}')
+try:
+    if 'nums' in input_data and 'target' in input_data:
+        result = solution(input_data['nums'], input_data['target'])
+    else:
+        result = solution(**input_data)
+    print(json.dumps(result))
+except Exception as e:
+    import traceback
+    print("Error:", str(e))
+    traceback.print_exc()
+`
+      } else {
+        return c.json({ success: false, error: 'Test execution is currently only supported for JavaScript and Python.' })
+      }
+
+      const response = await fetch('https://emacs.piston.rs/api/v2/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: language,
+          version: version,
+          files: [{ content: wrapperCode }],
+        })
+      })
+
+      const result = await response.json()
+      const outputStr = result.run?.stdout?.trim()
+      let actualOutput = outputStr
+      
+      try {
+        if (outputStr) actualOutput = JSON.parse(outputStr)
+      } catch (e) {}
+
+      // Compare arrays/objects safely
+      const passed = JSON.stringify(actualOutput) === JSON.stringify(tc.expectedOutput)
+      if (!passed) allPassed = false
+
+      results.push({
+        testCase: i + 1,
+        input: tc.input,
+        expectedOutput: tc.expectedOutput,
+        actualOutput,
+        passed,
+        error: result.run?.stderr
+      })
+    }
+
+    if (userId && !isRun) {
+      await prisma.submission.create({
+        data: {
+          userId,
+          questionId,
+          status: allPassed ? 'Pass' : 'Fail',
+          code,
+          language
+        }
+      })
+    }
+
+    return c.json({ success: true, data: { results, allPassed } })
+  } catch (error) {
+    console.error('Submit error:', error)
+    return c.json({ success: false, error: 'Submit execution failed' }, 500)
   }
 })
 

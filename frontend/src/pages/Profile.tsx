@@ -1,21 +1,71 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
-import { Trophy, Activity, Calendar as CalendarIcon, User as UserIcon, Code2 } from 'lucide-react';
+import { CheckCircle, MessageSquare, Star, Github, Linkedin } from 'lucide-react';
 import './Profile.css';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'https://intelx-148e.onrender.com';
 
 interface UserData {
   username: string;
   joinedAt: string;
+  rank: number;
+  reputation: number;
+  views: number;
+  discuss: number;
+  solution: number;
   stats: {
     totalSolved: number;
-    categoryBreakdown: Record<string, number>;
+    difficultyBreakdown: {
+      Easy: number;
+      Medium: number;
+      Hard: number;
+    };
     calendarHeatmap: Record<string, number>;
+    totalActiveDays: number;
+    maxStreak: number;
   };
-  recentSubmissions: any[];
+  totalAvailable?: {
+    Total: number;
+    Easy: number;
+    Medium: number;
+    Hard: number;
+  };
 }
+
+// Simple component to render the heatmap
+const Heatmap = ({ data }: { data: Record<string, number> }) => {
+  // Generate last 52 weeks (364 days)
+  const today = new Date();
+  const days = [];
+  for (let i = 364; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push(d);
+  }
+
+  return (
+    <div className="heatmap-grid">
+      {days.map((date, idx) => {
+        const dateStr = date.toISOString().split('T')[0];
+        const count = data[dateStr] || 0;
+        let level = 0;
+        if (count > 0) level = 1;
+        if (count >= 2) level = 2;
+        if (count >= 4) level = 3;
+        if (count >= 6) level = 4;
+        
+        return (
+          <div 
+            key={idx} 
+            className={`heatmap-cell level-${level}`} 
+            title={`${dateStr}: ${count} submissions`}
+          />
+        );
+      })}
+    </div>
+  );
+};
 
 export default function Profile() {
   const { user } = useAuthStore();
@@ -26,7 +76,11 @@ export default function Profile() {
     const fetchProfile = async () => {
       if (!user) return;
       try {
-        const response = await axios.get(`${API_BASE}/users/${user.id}`);
+        // First try to fetch from local API (since we haven't deployed backend to Render yet)
+        // If it fails, fallback to production API
+        const response = await axios.get(`http://localhost:5000/users/${user.id}`).catch(() => 
+          axios.get(`${API_BASE}/users/${user.id}`)
+        );
         if (response.data.success) {
           setProfileData(response.data.data);
         }
@@ -39,94 +93,156 @@ export default function Profile() {
     fetchProfile();
   }, [user]);
 
-  if (!user) {
+  if (loading) {
     return (
-      <div className="container" style={{ marginTop: '40px' }}>
-        <div className="glass-panel" style={{ padding: '40px', textAlign: 'center' }}>
-          <h2>Please log in to view your profile</h2>
-        </div>
+      <div className="container flex-center" style={{ minHeight: '60vh' }}>
+        <div className="spinner"></div>
       </div>
     );
   }
 
-  if (loading) {
-    return <div className="loading-state flex-center"><div className="spinner"></div></div>;
+  if (!profileData) {
+    return (
+      <div className="container flex-center">
+        <h2>Profile not found</h2>
+      </div>
+    );
   }
 
+  const { stats, totalAvailable } = profileData;
+  
+  // Use DB data if available, fallback to 0 to avoid crashes
+  const TOTAL_QUESTIONS = totalAvailable?.Total || 0;
+  const TOTAL_EASY = totalAvailable?.Easy || 0;
+  const TOTAL_MEDIUM = totalAvailable?.Medium || 0;
+  const TOTAL_HARD = totalAvailable?.Hard || 0;
+
+  const totalSolved = stats?.totalSolved || 0;
+  const solvedPercentage = TOTAL_QUESTIONS > 0 ? (totalSolved / TOTAL_QUESTIONS) * 100 : 0;
+  
+  const rank = profileData.rank || 0;
+  const reputation = profileData.reputation || 0;
+  const solution = profileData.solution || 0;
+  const discuss = profileData.discuss || 0;
+  const diffEasy = stats?.difficultyBreakdown?.Easy || 0;
+  const diffMedium = stats?.difficultyBreakdown?.Medium || 0;
+  const diffHard = stats?.difficultyBreakdown?.Hard || 0;
+  const totalActiveDays = stats?.totalActiveDays || 0;
+  const maxStreak = stats?.maxStreak || 0;
+  const calendarHeatmap = stats?.calendarHeatmap || {};
+
   return (
-    <div className="container profile-container animate-fade-in">
-      <div className="profile-header glass-panel">
-        <div className="avatar-circle">
-          <UserIcon size={48} color="var(--accent-primary)" />
-        </div>
-        <div className="profile-info">
-          <h1 className="profile-username">{profileData?.username || user.username}</h1>
-          <p className="profile-joined">
-            <CalendarIcon size={14} className="mr-2" />
-            Joined {profileData?.joinedAt ? new Date(profileData.joinedAt).toLocaleDateString() : 'recently'}
-          </p>
-        </div>
-      </div>
-
-      <div className="stats-grid">
-        {/* Total Solved Card */}
-        <div className="stat-card glass-panel">
-          <div className="stat-header">
-            <Trophy size={20} className="stat-icon trophy" />
-            <h3>Total Solved</h3>
+    <div className="leetcode-profile-container animate-fade-in">
+      {/* Left Sidebar */}
+      <aside className="profile-sidebar">
+        <div className="user-info-card glass-panel">
+          <div className="avatar-section">
+            <div className="avatar">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#9ca3af" className="w-full h-full">
+                <path fillRule="evenodd" d="M12 2.25c-2.42 0-4.38 1.96-4.38 4.38 0 2.41 1.96 4.37 4.38 4.37s4.38-1.96 4.38-4.37c0-2.42-1.96-4.38-4.38-4.38ZM7.5 13.5c-3.13 0-5.67 2.37-6 5.43a.75.75 0 0 0 .75.82h19.5a.75.75 0 0 0 .75-.82c-.33-3.06-2.87-5.43-6-5.43H7.5Z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="user-details">
+              <h1>{profileData.username}</h1>
+              <p className="username-handle">@{profileData.username.toLowerCase()}</p>
+              <div className="rank-info">
+                Rank <span>{rank.toLocaleString()}</span>
+              </div>
+            </div>
           </div>
-          <div className="stat-value">{profileData?.stats?.totalSolved || 0}</div>
-          <p className="stat-desc">Questions conquered</p>
-        </div>
 
-        {/* Category Breakdown Card */}
-        <div className="stat-card glass-panel col-span-2">
-          <div className="stat-header">
-            <Activity size={20} className="stat-icon activity" />
-            <h3>Category Breakdown</h3>
-          </div>
-          <div className="category-chart">
-            {profileData?.stats?.categoryBreakdown && Object.keys(profileData.stats.categoryBreakdown).length > 0 ? (
-              Object.entries(profileData.stats.categoryBreakdown).map(([cat, count]) => (
-                <div key={cat} className="category-bar-container">
-                  <div className="cat-label">{cat}</div>
-                  <div className="cat-bar-wrapper">
-                    <div 
-                      className="cat-bar" 
-                      style={{ width: `${(count / Math.max(1, profileData.stats.totalSolved)) * 100}%` }}
-                    ></div>
-                  </div>
-                  <div className="cat-count">{count}</div>
-                </div>
-              ))
-            ) : (
-              <p className="empty-stats">No categories solved yet.</p>
-            )}
+          <button className="edit-profile-btn">Edit Profile</button>
+
+          <div className="social-links">
+            <a href="#" className="social-link"><Github size={16} /> {profileData.username}-github</a>
+            <a href="#" className="social-link"><Linkedin size={16} /> in/{profileData.username}-linkedin</a>
           </div>
         </div>
-      </div>
 
-      <div className="recent-submissions glass-panel">
-        <div className="stat-header">
-          <Code2 size={20} className="stat-icon recent" />
-          <h3>Recent Submissions</h3>
-        </div>
-        {profileData?.recentSubmissions && profileData.recentSubmissions.length > 0 ? (
-          <ul className="submissions-list">
-            {profileData.recentSubmissions.map((sub, i) => (
-              <li key={i} className="submission-item">
-                <span className={`status-badge ${sub.status === 'Pass' ? 'success' : 'error'}`}>
-                  {sub.status}
-                </span>
-                <span className="sub-lang">{sub.language}</span>
-                <span className="sub-date">{new Date(sub.submittedAt).toLocaleDateString()}</span>
-              </li>
-            ))}
+        <div className="community-stats-card glass-panel">
+          <h3>Community Stats</h3>
+          <ul className="stats-list">
+            <li>
+              <div className="stat-label"><CheckCircle size={16} className="icon-cyan" /> Solution</div>
+              <div className="stat-value">{solution}</div>
+            </li>
+            <li>
+              <div className="stat-label"><MessageSquare size={16} className="icon-green" /> Discuss</div>
+              <div className="stat-value">{discuss}</div>
+            </li>
+            <li>
+              <div className="stat-label"><Star size={16} className="icon-orange" /> Reputation</div>
+              <div className="stat-value">{reputation}</div>
+            </li>
           </ul>
-        ) : (
-          <p className="empty-stats" style={{ marginTop: '16px' }}>No recent submissions.</p>
-        )}
-      </div>
+        </div>
+      </aside>
+
+      {/* Main Content Area */}
+      <main className="profile-main">
+        {/* Solved Stats */}
+        <div className="solved-card glass-panel">
+          <div className="circle-progress-container">
+            <svg viewBox="0 0 100 100" className="circle-svg">
+              <circle cx="50" cy="50" r="45" className="circle-bg" />
+              <circle 
+                cx="50" cy="50" r="45" 
+                className="circle-fill" 
+                strokeDasharray="283" 
+                strokeDashoffset={283 - (283 * solvedPercentage) / 100}
+              />
+            </svg>
+            <div className="circle-content">
+              <span className="solved-count">{totalSolved}</span>
+              <span className="solved-total">/ {TOTAL_QUESTIONS}</span>
+              <span className="solved-label"><CheckCircle size={14}/> Solved</span>
+            </div>
+          </div>
+
+          <div className="difficulty-bars">
+            <div className="diff-bar-wrapper">
+              <div className="diff-label">Easy</div>
+              <div className="diff-counts"><span>{diffEasy}</span>/{TOTAL_EASY}</div>
+              <div className="progress-bar-bg">
+                <div className="progress-bar-fill easy" style={{ width: `${TOTAL_EASY > 0 ? (diffEasy/TOTAL_EASY)*100 : 0}%`}}></div>
+              </div>
+            </div>
+            <div className="diff-bar-wrapper">
+              <div className="diff-label">Med.</div>
+              <div className="diff-counts"><span>{diffMedium}</span>/{TOTAL_MEDIUM}</div>
+              <div className="progress-bar-bg">
+                <div className="progress-bar-fill medium" style={{ width: `${TOTAL_MEDIUM > 0 ? (diffMedium/TOTAL_MEDIUM)*100 : 0}%`}}></div>
+              </div>
+            </div>
+            <div className="diff-bar-wrapper">
+              <div className="diff-label">Hard</div>
+              <div className="diff-counts"><span>{diffHard}</span>/{TOTAL_HARD}</div>
+              <div className="progress-bar-bg">
+                <div className="progress-bar-fill hard" style={{ width: `${TOTAL_HARD > 0 ? (diffHard/TOTAL_HARD)*100 : 0}%`}}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom: Submissions Calendar Heatmap */}
+        <div className="heatmap-card glass-panel">
+          <div className="heatmap-header">
+            <h3>{totalSolved} submissions in the past one year</h3>
+            <div className="heatmap-stats">
+              <span>Total active days: <strong>{totalActiveDays}</strong></span>
+              <span>Max streak: <strong>{maxStreak}</strong></span>
+            </div>
+          </div>
+          <div className="heatmap-wrapper">
+            <Heatmap data={calendarHeatmap} />
+            <div className="heatmap-months">
+              <span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span>
+              <span>Dec</span><span>Jan</span><span>Feb</span><span>Mar</span>
+              <span>Apr</span><span>May</span><span>Jun</span><span>Jul</span>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

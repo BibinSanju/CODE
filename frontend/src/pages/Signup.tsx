@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { Mail, Lock, User, AlertCircle } from 'lucide-react';
 import './Auth.css';
 
-const API_BASE = 'http://localhost:3000';
+const API_BASE = 'https://intelx-148e.onrender.com';
 
 export default function Signup() {
   const [username, setUsername] = useState('');

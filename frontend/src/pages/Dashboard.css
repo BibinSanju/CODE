@@ -1,0 +1,120 @@
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.intelx-title {
+  font-size: 5rem;
+  font-weight: 800;
+  letter-spacing: -2px;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
+}
+
+.dashboard-subtitle {
+  color: var(--text-secondary);
+  font-size: 1.25rem;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  width: 100%;
+}
+
+.category-card {
+  position: relative;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(20, 20, 25, 0.6);
+}
+
+.category-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.category-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.category-card:hover .category-icon-wrapper {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.category-name {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+}
+
+.category-shortname {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  letter-spacing: 1px;
+}
+
+.category-desc {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  z-index: 1;
+}
+
+.card-hover-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.category-card:hover .card-hover-effect {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .intelx-title {
+    font-size: 3.5rem;
+  }
+  .categories-grid {
+    grid-template-columns: 1fr;
+  }
+}

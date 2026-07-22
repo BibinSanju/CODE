@@ -14,12 +14,25 @@ model User {
   password    String?      // Added for native auth
   username    String
   createdAt   DateTime     @default(now())
+  
+  // Profile Stats
+  rank        Int          @default(1000000)
+  reputation  Int          @default(0)
+  views       Int          @default(0)
+  discuss     Int          @default(0)
+  solution    Int          @default(0)
+  contestRating Int        @default(1400)
+  globalRanking Int        @default(100000)
+  attendedContests Int     @default(0)
+
   submissions Submission[] // Relation to track solved problems
 }
 
 model Question {
   id          String       @id @default(uuid())
   category    String       // DSA, DB, ML, SysDesign
+  subtopic    String       @default("General") // e.g., DP, BFS, DFS
+  difficulty  String       @default("Medium") // Easy, Medium, Hard
   title       String
   description String
   testCases   Json?    
