@@ -8,10 +8,13 @@ const app = express();
 app.use(express.json());
 
 app.post('/execute', async (req, res) => {
-    const { language, code } = req.body;
+    const { language, code, input } = req.body;
     const runId = crypto.randomBytes(8).toString('hex');
     const tempDir = path.join(__dirname, 'temp');
     await fs.mkdir(tempDir, { recursive: true });
+
+    const inputPath = path.join(tempDir, `${runId}.in`);
+    await fs.writeFile(inputPath, input || '');
 
     let command = '';
     let filePath = '';
@@ -20,31 +23,31 @@ app.post('/execute', async (req, res) => {
         if (language === 'javascript') {
             filePath = path.join(tempDir, `${runId}.js`);
             await fs.writeFile(filePath, code);
-            command = `node ${filePath}`;
+            command = `node ${filePath} < ${inputPath}`;
         }
         else if (language === 'python') {
             filePath = path.join(tempDir, `${runId}.py`);
             await fs.writeFile(filePath, code);
-            command = `python3 ${filePath}`;
+            command = `python3 ${filePath} < ${inputPath}`;
         } 
         else if (language === 'c') {
             filePath = path.join(tempDir, `${runId}.c`);
             const outPath = path.join(tempDir, `${runId}.out`);
             await fs.writeFile(filePath, code);
-            command = `gcc ${filePath} -o ${outPath} && ${outPath}`;
+            command = `gcc ${filePath} -o ${outPath} && ${outPath} < ${inputPath}`;
         }
         else if (language === 'cpp') {
             filePath = path.join(tempDir, `${runId}.cpp`);
             const outPath = path.join(tempDir, `${runId}.out`);
             await fs.writeFile(filePath, code);
-            command = `g++ ${filePath} -o ${outPath} && ${outPath}`;
+            command = `g++ ${filePath} -o ${outPath} && ${outPath} < ${inputPath}`;
         }
         else if (language === 'java') {
             filePath = path.join(tempDir, `Main_${runId}.java`);
             // Force the public class name to match the file name
             const javaCode = code.replace(/public\s+class\s+\w+/g, `public class Main_${runId}`);
             await fs.writeFile(filePath, javaCode);
-            command = `javac ${filePath} && java -cp ${tempDir} Main_${runId}`;
+            command = `javac ${filePath} && java -cp ${tempDir} Main_${runId} < ${inputPath}`;
         } 
         else {
             return res.status(400).json({ error: "Unsupported language" });
