@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { CheckCircle, MessageSquare, Star, Github, Linkedin } from 'lucide-react';
 import './Profile.css';
 
-const API_BASE = 'https://intelx-148e.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://intelx-148e.onrender.com';
 
 interface UserData {
   username: string;
