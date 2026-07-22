@@ -107,13 +107,33 @@ def main():
     for q in questions:
         title = q['title']
         
-        cursor.execute('SELECT id FROM "Question" WHERE title = %s', (title,))
-        if cursor.fetchone():
-            skipped += 1
-            print(f"Skipping {title}, already exists.")
+        cursor.execute('SELECT id, "testCases" FROM "Question" WHERE title = %s', (title,))
+        row = cursor.fetchone()
+        
+        if row:
+            q_id, existing_tc = row
+            # If valid test cases exist, skip
+            if existing_tc and existing_tc != [] and existing_tc != '[]' and len(existing_tc) > 0:
+                skipped += 1
+                print(f"Skipping {title}, already has valid test cases.")
+                continue
+            
+            # If row exists but testcases are empty, update it
+            print(f"Generating test cases for existing question: {title}...")
+            description = q.get('html_content', '')
+            test_cases_json = generate_test_cases(groq_client, title, description)
+            try:
+                cursor.execute('UPDATE "Question" SET "testCases" = %s WHERE id = %s', (test_cases_json, q_id))
+                inserted += 1
+                conn.commit()
+                print(f"Updated test cases for: {title}")
+            except Exception as e:
+                print(f"Error updating {title}: {e}")
+                conn.rollback()
+            time.sleep(2)
             continue
             
-        print(f"Generating test cases for: {title}...")
+        print(f"Generating test cases for new question: {title}...")
         description = q.get('html_content', '')
         test_cases_json = generate_test_cases(groq_client, title, description)
         
@@ -128,15 +148,12 @@ def main():
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
             ''', (q_id, category, subtopic, difficulty, title, description, test_cases_json))
             inserted += 1
-            # Commit per row to ensure we don't lose data if script stops
             conn.commit() 
             print(f"Inserted: {title}")
         except Exception as e:
             print(f"Error inserting {title}: {e}")
             conn.rollback()
-            continue
             
-        # Add a slight delay to respect Groq rate limits
         time.sleep(2)
 
     cursor.close()
