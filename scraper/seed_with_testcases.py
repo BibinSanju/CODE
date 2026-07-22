@@ -17,7 +17,7 @@ def clean_html(html):
 def generate_test_cases(client, title, html_description):
     text_desc = clean_html(html_description)
     prompt = f"""You are an expert programming test case generator.
-Analyze the following LeetCode problem description and generate exactly 2 valid test cases for it.
+Analyze the following LeetCode problem description and generate exactly 10 valid test cases for it.
 Your output MUST be ONLY valid JSON matching this exact structure (an array of objects).
 Do not include any explanation, intro, or markdown formatting (no ```json or ``` blocks, just raw JSON).
 

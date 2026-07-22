@@ -263,7 +263,19 @@ export default function Workspace() {
                       )}
                     </div>
                   )}
-                  {testResults.length === 0 && !output && (
+                  {testResults.length === 0 && !output && question.testCases && (
+                    <div className="test-results-list">
+                      <div className="text-muted mb-3 italic">These are the visible test cases your code will be run against.</div>
+                      {(question.testCases as any[]).slice(0, 2).map((tc, i) => (
+                        <div key={i} className="test-case-card" style={{ borderLeft: '3px solid var(--accent)' }}>
+                          <h4>Test Case {i + 1}</h4>
+                          <div className="tc-row"><strong>Input:</strong> <pre className="inline-block align-top mt-1 p-2 bg-black bg-opacity-30 rounded-md text-xs whitespace-pre-wrap">{tc.input}</pre></div>
+                          <div className="tc-row"><strong>Expected Output:</strong> <pre className="inline-block align-top mt-1 p-2 bg-black bg-opacity-30 rounded-md text-xs whitespace-pre-wrap">{tc.expectedOutput}</pre></div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {testResults.length === 0 && !output && !question.testCases && (
                     <pre>Run your code to see output here.</pre>
                   )}
                 </div>
