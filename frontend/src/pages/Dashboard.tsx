@@ -13,28 +13,20 @@ const categories = [
     description: 'Master the fundamentals of problem solving and optimize your code.'
   },
   {
-    id: 'ml-dl',
-    name: 'Machine Learning / Deep Learning',
-    shortName: 'ML/DL',
+    id: 'machine-learning',
+    name: 'Machine Learning',
+    shortName: 'ML',
     icon: BrainCircuit,
     color: '#8b5cf6', // Purple
     description: 'Explore neural networks, models, and artificial intelligence.'
   },
   {
-    id: 'cn',
+    id: 'computer-networks',
     name: 'Computer Networks',
     shortName: 'CN',
     icon: Network,
     color: '#3b82f6', // Blue
     description: 'Understand the protocols and architecture of the internet.'
-  },
-  {
-    id: 'os',
-    name: 'Operating Systems',
-    shortName: 'OS',
-    icon: Cpu,
-    color: '#10b981', // Emerald
-    description: 'Dive deep into memory management, threading, and kernels.'
   },
   {
     id: 'system-design',
@@ -45,12 +37,36 @@ const categories = [
     description: 'Learn to build scalable, highly available distributed systems.'
   },
   {
-    id: 'databases',
-    name: 'DataBases',
+    id: 'dbms',
+    name: 'DBMS',
     shortName: 'DB',
     icon: Database,
     color: '#ef4444', // Red
     description: 'Master SQL, NoSQL, indexing, and data modeling.'
+  },
+  {
+    id: 'cyber-security',
+    name: 'Cyber Security',
+    shortName: 'Sec',
+    icon: Cpu,
+    color: '#10b981', // Emerald
+    description: 'Learn about network security, cryptography, and vulnerabilities.'
+  },
+  {
+    id: 'cloud-computing',
+    name: 'Cloud Computing',
+    shortName: 'Cloud',
+    icon: Database,
+    color: '#0ea5e9', // Sky blue
+    description: 'Master AWS, GCP, distributed architectures, and microservices.'
+  },
+  {
+    id: 'operating-systems',
+    name: 'Operating Systems',
+    shortName: 'OS',
+    icon: Cpu,
+    color: '#f43f5e', // Rose
+    description: 'Dive deep into memory management, threading, and kernels.'
   }
 ];
 

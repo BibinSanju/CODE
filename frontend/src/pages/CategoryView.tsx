@@ -10,11 +10,13 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'https://intelx-148e.onrender.
 
 const categoryNames: Record<string, string> = {
   'dsa': 'Data Structures and Algorithms',
-  'ml-dl': 'Machine Learning / Deep Learning',
-  'cn': 'Computer Networks',
-  'os': 'Operating Systems',
+  'machine-learning': 'Machine Learning',
+  'computer-networks': 'Computer Networks',
   'system-design': 'System Design',
-  'databases': 'DataBases'
+  'dbms': 'DBMS',
+  'cyber-security': 'Cyber Security',
+  'cloud-computing': 'Cloud Computing',
+  'operating-systems': 'Operating Systems'
 };
 
 interface Question {
@@ -47,9 +49,13 @@ export default function CategoryView() {
           
           let backendCategory = name;
           if (name === 'dsa') backendCategory = 'DSA';
-          else if (name === 'databases') backendCategory = 'DB';
-          else if (name === 'ml-dl') backendCategory = 'ML';
-          else if (name === 'system-design') backendCategory = 'SysDesign';
+          else if (name === 'dbms') backendCategory = 'DBMS';
+          else if (name === 'machine-learning') backendCategory = 'Machine Learning';
+          else if (name === 'system-design') backendCategory = 'System Design';
+          else if (name === 'computer-networks') backendCategory = 'Computer Networks';
+          else if (name === 'cyber-security') backendCategory = 'Cyber Security';
+          else if (name === 'cloud-computing') backendCategory = 'Cloud Computing';
+          else if (name === 'operating-systems') backendCategory = 'Operating Systems';
 
           const categoryQuestions = allQuestions.filter(
             q => q.category.toLowerCase() === backendCategory?.toLowerCase()

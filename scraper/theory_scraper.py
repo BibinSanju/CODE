@@ -161,6 +161,51 @@ class GeeksForGeeksScraper(BaseScraper):
             
         return results
 
+class SimplilearnScraper(BaseScraper):
+    def __init__(self, category: str):
+        super().__init__("Simplilearn", category)
+
+    def parse(self, html: str, url: str) -> List[Dict]:
+        soup = BeautifulSoup(html, 'html.parser')
+        results = []
+        
+        # Simplilearn typically uses article or content divs, with headings for questions
+        content_div = soup.find('div', class_='article-body')
+        if not content_div:
+            content_div = soup
+            
+        headings = content_div.find_all(['h2', 'h3'])
+        
+        for h in headings:
+            question_text = h.get_text(strip=True)
+            if not question_text.lower().startswith(('q', 'what', 'how', 'explain', 'why', 'name', 'list', 'define', '1', '2', '3', '4', '5', '6', '7', '8', '9')):
+                continue
+                
+            answer_text = ""
+            sibling = h.find_next_sibling()
+            
+            while sibling and sibling.name not in ['h2', 'h3']:
+                if sibling.name == 'p':
+                    answer_text += sibling.get_text(strip=True) + " "
+                elif sibling.name == 'ul' or sibling.name == 'ol':
+                    for li in sibling.find_all('li'):
+                        answer_text += "- " + li.get_text(strip=True) + "\n"
+                sibling = sibling.find_next_sibling()
+                
+            if answer_text.strip():
+                metadata = self.generate_metadata(question_text, answer_text)
+                results.append({
+                    "title": question_text[:200],
+                    "description": f"**Question:**\n{question_text}\n\n**Source:** {self.source_name}",
+                    "category": self.category,
+                    "metadata": {
+                        "detailed_answer": answer_text.strip(),
+                        "concise_answer": metadata["concise_answer"],
+                        "scoring_rubric": metadata["scoring_rubric"]
+                    }
+                })
+        return results
+
 def main():
     env_path = os.path.join(os.path.dirname(__file__), '..', 'backend', '.env')
     load_dotenv(env_path)
@@ -194,6 +239,12 @@ def main():
         
         # Computer Networks
         (InterviewBitScraper("Computer Networks"), "https://www.interviewbit.com/networking-interview-questions/"),
+        
+        # Cloud Computing
+        (SimplilearnScraper("Cloud Computing"), "https://www.simplilearn.com/cloud-computing-interview-questions-article"),
+        
+        # Operating Systems
+        (InterviewBitScraper("Operating Systems"), "https://www.interviewbit.com/operating-system-interview-questions/"),
     ]
     
     all_data = []
