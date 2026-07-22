@@ -4,7 +4,7 @@ import axios from 'axios';
 import { ChevronRight, Circle, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
 import './CategoryView.css';
 
-const API_BASE = 'https://intelx-148e.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://intelx-148e.onrender.com';
 
 // Removed hardcoded categorySubtopics
 

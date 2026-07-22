@@ -4,7 +4,7 @@ import axios from 'axios';
 import { CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 import './ProblemsList.css';
 
-const API_BASE = 'https://intelx-148e.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://intelx-148e.onrender.com';
 
 interface Question {
   id: string;
