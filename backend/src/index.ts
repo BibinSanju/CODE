@@ -254,7 +254,7 @@ app.post('/push-to-github', async (c) => {
     const result = await response.json()
 
     if (!response.ok) {
-      return c.json({ success: false, error: result.message }, response.status)
+      return c.json({ success: false, error: result.message }, { status: response.status })
     }
 
     return c.json({ success: true, url: result.content.html_url })
