@@ -15,6 +15,7 @@ interface Question {
   description: string;
   category: string;
   difficulty?: string;
+  testCases?: any;
 }
 
 const LANGUAGES = [
@@ -143,7 +144,19 @@ export default function Workspace() {
                 <span className="category-tag">{question.category}</span>
               </div>
             </div>
-            <div className="pane-content problem-description" dangerouslySetInnerHTML={{ __html: question.description }}>
+            <div className="pane-content problem-description">
+              <div dangerouslySetInnerHTML={{ __html: question.description }} />
+              {question.testCases && (
+                <div className="problem-examples mt-8">
+                  <h3 className="mb-4 text-lg font-bold">Examples:</h3>
+                  {(question.testCases as any[]).slice(0, 2).map((tc, index) => (
+                    <div key={index} className="example-box mb-4 p-4 glass-panel rounded-md">
+                      <p className="mb-2"><strong>Input:</strong> <code>{JSON.stringify(tc.input)}</code></p>
+                      <p><strong>Output:</strong> <code>{JSON.stringify(tc.expectedOutput)}</code></p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -213,20 +226,35 @@ export default function Workspace() {
                       <div className={`overall-status ${allPassed ? 'text-green' : 'text-red'}`}>
                         {allPassed ? '✅ Accepted' : '❌ Wrong Answer'}
                       </div>
-                      
-                      {testResults.slice(0, 2).map((tr, i) => (
-                        <div key={i} className={`test-case-card ${tr.passed ? 'passed' : 'failed'}`}>
-                          <h4>Test Case {tr.testCase} {tr.passed ? '✅' : '❌'}</h4>
-                          <div className="tc-row"><strong>Input:</strong> <code>{JSON.stringify(tr.input)}</code></div>
-                          <div className="tc-row"><strong>Expected:</strong> <code>{JSON.stringify(tr.expectedOutput)}</code></div>
-                          <div className="tc-row"><strong>Actual:</strong> <code>{JSON.stringify(tr.actualOutput)}</code></div>
-                          {tr.error && <div className="error-text">Error: {tr.error}</div>}
-                        </div>
-                      ))}
+                      {testResults.map((tr, i) => {
+                        if (i < 2) {
+                          return (
+                            <div key={i} className={`test-case-card ${tr.passed ? 'passed' : 'failed'}`}>
+                              <h4>Test Case {tr.testCase} {tr.passed ? '✅' : '❌'}</h4>
+                              <div className="tc-row"><strong>Input:</strong> <code>{JSON.stringify(tr.input)}</code></div>
+                              <div className="tc-row"><strong>Expected:</strong> <code>{JSON.stringify(tr.expectedOutput)}</code></div>
+                              <div className="tc-row"><strong>Actual:</strong> <code>{JSON.stringify(tr.actualOutput)}</code></div>
+                              {tr.error && <div className="error-text">Error: {tr.error}</div>}
+                            </div>
+                          );
+                        } else if (!tr.passed) {
+                          return (
+                            <div key={i} className="test-case-card failed">
+                              <h4>Hidden Test Case {tr.testCase} ❌</h4>
+                              <div className="tc-row text-muted italic">Input and Expected Output are hidden.</div>
+                              <div className="tc-row"><strong>Your Output:</strong> <code>{JSON.stringify(tr.actualOutput)}</code></div>
+                              {tr.error && <div className="error-text">Error: {tr.error}</div>}
+                            </div>
+                          );
+                        }
+                        return null;
+                      })}
                       
                       {testResults.length > 2 && (
                         <div className="hidden-cases-summary">
-                          {testResults.length - 2} remaining test cases hidden. 
+                          {testResults.filter((_, i) => i >= 2 && !testResults[i].passed).length > 0 
+                            ? "Some hidden test cases failed." 
+                            : `${testResults.length - 2} remaining test cases hidden and passed successfully.`}
                           <br />
                           <span className={allPassed ? 'text-green' : 'text-red'}>
                             Status: {allPassed ? 'All passed!' : 'Some cases failed.'}

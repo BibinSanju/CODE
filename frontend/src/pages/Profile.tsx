@@ -76,11 +76,7 @@ export default function Profile() {
     const fetchProfile = async () => {
       if (!user) return;
       try {
-        // First try to fetch from local API (since we haven't deployed backend to Render yet)
-        // If it fails, fallback to production API
-        const response = await axios.get(`http://localhost:5000/users/${user.id}`).catch(() => 
-          axios.get(`${API_BASE}/users/${user.id}`)
-        );
+        const response = await axios.get(`${API_BASE}/users/${user.id}`);
         if (response.data.success) {
           setProfileData(response.data.data);
         }

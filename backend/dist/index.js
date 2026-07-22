@@ -280,7 +280,7 @@ except Exception as e:
             else {
                 return c.json({ success: false, error: 'Test execution is currently only supported for JavaScript and Python.' });
             }
-            const response = await fetch('https://emacs.piston.rs/api/v2/execute', {
+            const response = await fetch('https://emkc.org/api/v2/piston/execute', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -290,6 +290,10 @@ except Exception as e:
                 })
             });
             const result = await response.json();
+            if (result.message) {
+                // Piston whitelist or rate limit error
+                return c.json({ success: false, error: 'Piston Engine Error: ' + result.message }, 500);
+            }
             const outputStr = result.run?.stdout?.trim();
             let actualOutput = outputStr;
             try {
@@ -325,7 +329,7 @@ except Exception as e:
     }
     catch (error) {
         console.error('Submit error:', error);
-        return c.json({ success: false, error: 'Submit execution failed' }, 500);
+        return c.json({ success: false, error: 'Code execution engine unreachable: ' + (error.message || 'Unknown error') }, 500);
     }
 });
 // Phase 3: SQL Execution Engine (In-Memory Postgres)
