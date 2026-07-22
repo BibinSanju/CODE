@@ -19,11 +19,11 @@ interface Question {
 }
 
 const LANGUAGES = [
-  { id: 'javascript', name: 'JavaScript', version: '18.15.0', defaultCode: 'const fs = require(\'fs\');\n\nfunction main() {\n    const input = fs.readFileSync(0, \'utf-8\').trim().split(/\\s+/);\n    if (input.length === 0 || input[0] === "") return;\n    \n    // Write your code here\n    \n}\n\nmain();\n' },
-  { id: 'python', name: 'Python', version: '3.10.0', defaultCode: 'import sys\n\ndef main():\n    input_data = sys.stdin.read().split()\n    if not input_data: return\n    \n    # Write your code here\n    \nif __name__ == "__main__":\n    main()\n' },
-  { id: 'java', name: 'Java', version: '15.0.2', defaultCode: 'import java.util.Scanner;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner scanner = new Scanner(System.in);\n        // Write your code here\n        \n    }\n}\n' },
-  { id: 'cpp', name: 'C++', version: '10.2.0', defaultCode: '#include <iostream>\nusing namespace std;\n\nint main() {\n    // Write your code here\n    return 0;\n}\n' },
-  { id: 'c', name: 'C', version: '10.2.0', defaultCode: '#include <stdio.h>\n\nint main() {\n    // Write your code here\n    return 0;\n}\n' }
+  { id: 'javascript', name: 'JavaScript', version: '18.15.0', defaultCode: '' },
+  { id: 'python', name: 'Python', version: '3.10.0', defaultCode: '' },
+  { id: 'java', name: 'Java', version: '15.0.2', defaultCode: '' },
+  { id: 'cpp', name: 'C++', version: '10.2.0', defaultCode: '' },
+  { id: 'c', name: 'C', version: '10.2.0', defaultCode: '' }
 ];
 
 export default function Workspace() {
