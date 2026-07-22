@@ -24,7 +24,7 @@ console.log(`Server is running on port ${port}`)
 app.use('/*', cors({
   origin: [
     'http://localhost:5173',
-    'https://your-frontend-project.vercel.app'
+    'https://intelxf.vercel.app'
   ],
   allowHeaders: ['Content-Type', 'Authorization'],
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -149,7 +149,7 @@ app.get('/users/:id', async (c) => {
         currentStreak = 1
       } else {
         const diffTime = Math.abs(date.getTime() - previousDate.getTime())
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) 
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
         if (diffDays === 1) {
           currentStreak++
         } else {
@@ -261,7 +261,7 @@ app.post('/execute/code', async (c) => {
 app.post('/execute/submit', async (c) => {
   try {
     const { questionId, language, version, code, userId, isRun } = await c.req.json()
-    
+
     const question = await prisma.question.findUnique({ where: { id: questionId } })
     if (!question || !question.testCases) {
       return c.json({ success: false, error: 'Question or test cases not found' }, 404)
@@ -271,7 +271,7 @@ app.post('/execute/submit', async (c) => {
     if (isRun) {
       testCases = testCases.slice(0, 2)
     }
-    
+
     const results = []
     let allPassed = true
 
@@ -321,13 +321,13 @@ except Exception as e:
       if (result.status === 'error') {
         return c.json({ success: false, error: 'Execution Error: ' + result.output }, 500)
       }
-      
+
       const outputStr = result.output?.trim()
       let actualOutput = outputStr
-      
+
       try {
         if (outputStr) actualOutput = JSON.parse(outputStr)
-      } catch (e) {}
+      } catch (e) { }
 
       // Compare arrays/objects safely
       const passed = JSON.stringify(actualOutput) === JSON.stringify(tc.expectedOutput)
