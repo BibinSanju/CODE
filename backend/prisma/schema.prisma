@@ -6,17 +6,35 @@ datasource db {
   provider = "postgresql"
 }
 
+
 model User {
-  id        String   @id @default(uuid())
-  githubId  String   @unique
-  username  String
-  createdAt DateTime @default(now())
+  id          String       @id @default(uuid())
+  githubId    String?      @unique  // Made optional for native auth
+  email       String?      @unique  // Added for native auth
+  password    String?      // Added for native auth
+  username    String
+  createdAt   DateTime     @default(now())
+  submissions Submission[] // Relation to track solved problems
 }
 
 model Question {
-  id          String   @id @default(uuid())
-  category    String   // DSA, DB, ML, SysDesign
+  id          String       @id @default(uuid())
+  category    String       // DSA, DB, ML, SysDesign
   title       String
   description String
-  testCases   Json?    // Piston execution payloads
+  testCases   Json?    
+  submissions Submission[] // Relation to track who solved it
+}
+
+model Submission {
+  id          String   @id @default(uuid())
+  userId      String
+  questionId  String
+  status      String   // e.g., "Pass", "Fail"
+  code        String
+  language    String
+  submittedAt DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id])
+  question    Question @relation(fields: [questionId], references: [id])
 }
