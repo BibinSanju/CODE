@@ -1,0 +1,22 @@
+{
+  "name": "backend",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.11",
+    "@prisma/client": "^7.9.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "hono": "^4.12.31",
+    "prisma": "^7.9.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "tsx": "^4.23.0",
+    "typescript": "^7.0.2"
+  }
+}
