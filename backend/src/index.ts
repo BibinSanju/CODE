@@ -307,22 +307,42 @@ except Exception as e:
         return c.json({ success: false, error: 'Test execution is currently only supported for JavaScript and Python.' })
       }
 
-      const response = await fetch('https://emkc.org/api/v2/piston/execute', {
+      const jdoodleLangMap: Record<string, { lang: string, version: string }> = {
+        'javascript': { lang: 'nodejs', version: '4' },
+        'python': { lang: 'python3', version: '4' },
+        'java': { lang: 'java', version: '4' },
+        'cpp': { lang: 'cpp', version: '5' },
+        'c': { lang: 'c', version: '5' },
+      }
+
+      const jdoodleConfig = jdoodleLangMap[language];
+      if (!jdoodleConfig) {
+        return c.json({ success: false, error: 'Language not supported' })
+      }
+
+      if (!process.env.JDOODLE_CLIENT_ID || !process.env.JDOODLE_CLIENT_SECRET) {
+        return c.json({ success: false, error: 'Execution engine missing API keys. Please set JDOODLE_CLIENT_ID and JDOODLE_CLIENT_SECRET in backend .env' }, 500)
+      }
+
+      const response = await fetch('https://api.jdoodle.com/v1/execute', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          language: language,
-          version: version,
-          files: [{ content: wrapperCode }],
+          clientId: process.env.JDOODLE_CLIENT_ID,
+          clientSecret: process.env.JDOODLE_CLIENT_SECRET,
+          script: wrapperCode,
+          language: jdoodleConfig.lang,
+          versionIndex: jdoodleConfig.version
         })
       })
 
       const result = await response.json()
-      if (result.message) {
-        // Piston whitelist or rate limit error
-        return c.json({ success: false, error: 'Piston Engine Error: ' + result.message }, 500)
+      if (result.error && !result.output) {
+        // JDoodle Auth or Rate Limit Error
+        return c.json({ success: false, error: 'JDoodle API Error: ' + result.error }, 500)
       }
-      const outputStr = result.run?.stdout?.trim()
+      
+      const outputStr = result.output?.trim()
       let actualOutput = outputStr
       
       try {
@@ -339,7 +359,7 @@ except Exception as e:
         expectedOutput: tc.expectedOutput,
         actualOutput,
         passed,
-        error: result.run?.stderr
+        error: (actualOutput && typeof actualOutput === 'string' && actualOutput.includes('Error:')) ? actualOutput : undefined
       })
     }
 

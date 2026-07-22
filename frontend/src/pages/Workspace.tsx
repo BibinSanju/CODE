@@ -7,7 +7,7 @@ import { Play, Check, AlertCircle } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 import './Workspace.css';
 
-const API_BASE = 'http://localhost:5000';
+const API_BASE = 'https://intelx-148e.onrender.com';
 
 interface Question {
   id: string;
