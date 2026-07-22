@@ -1,0 +1,46 @@
+# Environments
+venv/
+env/
+.env
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Data files
+*.json
+*.csv
+scraper/company_tags.json
+scraper/*_recent_interview_questions.json
+
+# Cloned repositories (avoid tracking nested git repos)
+scraper/leetcode-company-wise-problems/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
