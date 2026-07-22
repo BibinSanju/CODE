@@ -16,6 +16,7 @@ interface Question {
   category: string;
   difficulty?: string;
   testCases?: any;
+  type?: string;
 }
 
 const LANGUAGES = [
@@ -40,6 +41,11 @@ export default function Workspace() {
   const [isRunning, setIsRunning] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  
+  // Theory Questions State
+  const [textAnswer, setTextAnswer] = useState('');
+  const [theoryScore, setTheoryScore] = useState<number | null>(null);
+  const [theoryFeedback, setTheoryFeedback] = useState<string>('');
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -75,6 +81,34 @@ export default function Workspace() {
     }
     
     setIsRunning(true);
+    
+    // Theory Evaluation Flow
+    if (question?.type === 'Theory') {
+      setOutput('Evaluating answer...');
+      setTheoryScore(null);
+      setTheoryFeedback('');
+      try {
+        const response = await axios.post(`${API_BASE}/evaluate-theory`, {
+          questionId: id,
+          userId: user?.id,
+          answer: textAnswer
+        });
+        if (response.data.success) {
+          setTheoryScore(response.data.data.accuracyScore);
+          setTheoryFeedback(response.data.data.feedback);
+          setOutput('');
+        } else {
+          setOutput('Evaluation failed');
+        }
+      } catch (err: any) {
+        setOutput(err.response?.data?.error || 'An error occurred during evaluation.');
+      } finally {
+        setIsRunning(false);
+      }
+      return;
+    }
+
+    // Programming Flow
     setOutput(isSubmit ? 'Running all test cases...' : 'Running example cases...');
     setTestResults([]);
     try {
@@ -116,7 +150,7 @@ export default function Workspace() {
     );
   }
 
-  const isCodingProblem = ['dsa', 'ml', 'machine learning', 'ml/dl'].includes(question.category.toLowerCase());
+  const isCodingProblem = question.type !== 'Theory';
 
   return (
     <div className="workspace-container">
@@ -284,19 +318,88 @@ export default function Workspace() {
           </div>
         </Split>
       ) : (
-        <div className="problem-pane glass-panel single-pane">
-          <div className="pane-header">
-            <h2 className="problem-title">{question.title}</h2>
-            <div className="problem-meta">
-              <span className={`difficulty-tag ${question.difficulty?.toLowerCase() || 'medium'}`}>
-                {question.difficulty || 'Medium'}
-              </span>
-              <span className="category-tag">{question.category}</span>
+        <Split 
+          sizes={[45, 55]} 
+          minSize={300} 
+          expandToMin={false} 
+          gutterSize={8} 
+          gutterAlign="center" 
+          snapOffset={30} 
+          dragInterval={1} 
+          direction="horizontal" 
+          cursor="col-resize"
+          className="split-wrapper"
+        >
+          {/* Left Pane: Theory Problem Description */}
+          <div className="problem-pane glass-panel single-pane">
+            <div className="pane-header">
+              <h2 className="problem-title">{question.title}</h2>
+              <div className="problem-meta">
+                <span className={`difficulty-tag ${question.difficulty?.toLowerCase() || 'medium'}`}>
+                  {question.difficulty || 'Medium'}
+                </span>
+                <span className="category-tag">{question.category}</span>
+                <span className="type-tag bg-purple-500 text-white px-2 py-1 rounded text-xs ml-2 font-bold">Theory</span>
+              </div>
+            </div>
+            <div className="pane-content problem-description" dangerouslySetInnerHTML={{ __html: question.description }}>
             </div>
           </div>
-          <div className="pane-content problem-description" dangerouslySetInnerHTML={{ __html: question.description }}>
+
+          {/* Right Pane: Text Editor & AI Evaluation Console */}
+          <div className="editor-pane">
+            <Split
+              sizes={[60, 40]}
+              minSize={100}
+              direction="vertical"
+              className="vertical-split-wrapper"
+              gutterSize={8}
+            >
+              <div className="editor-container glass-panel flex flex-col h-full">
+                <div className="pane-header flex-between" style={{ padding: '8px 16px' }}>
+                  <div className="text-white font-semibold">Your Answer</div>
+                  <div className="editor-actions">
+                    <button className="btn-secondary flex-center btn-sm" onClick={() => setTextAnswer('')}>Clear</button>
+                    <button className="btn-submit flex-center btn-sm" onClick={() => handleRunOrSubmit(true)} disabled={isRunning}>
+                      <Check size={14} className="mr-2" />
+                      {isRunning ? 'Evaluating...' : 'Submit Answer'}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex-1 p-2 h-full">
+                  <textarea 
+                    className="w-full h-full bg-black bg-opacity-40 text-white border-none resize-none p-4 font-sans text-base outline-none focus:ring-1 focus:ring-blue-500 rounded-md"
+                    placeholder="Write your explanation or system design answer here..."
+                    value={textAnswer}
+                    onChange={(e) => setTextAnswer(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="console-container glass-panel">
+                <div className="pane-header">
+                  <span className="console-title">AI Evaluation</span>
+                </div>
+                <div className="console-output p-4">
+                  {output && <pre>{output}</pre>}
+                  {theoryScore !== null && (
+                    <div className="evaluation-results">
+                      <div className={`text-2xl font-bold mb-4 ${theoryScore >= 70 ? 'text-green-500' : 'text-yellow-500'}`}>
+                        Score: {theoryScore} / 100
+                      </div>
+                      <div className="text-white whitespace-pre-wrap leading-relaxed text-sm bg-black bg-opacity-30 p-4 rounded-md">
+                        {theoryFeedback}
+                      </div>
+                    </div>
+                  )}
+                  {theoryScore === null && !output && (
+                    <div className="text-muted italic">Submit your answer to get an AI evaluation.</div>
+                  )}
+                </div>
+              </div>
+            </Split>
           </div>
-        </div>
+        </Split>
       )}
     </div>
   );

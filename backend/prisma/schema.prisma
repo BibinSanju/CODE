@@ -32,10 +32,12 @@ model Question {
   id          String       @id @default(uuid())
   category    String       // DSA, DB, ML, SysDesign
   subtopic    String       @default("General") // e.g., DP, BFS, DFS
+  type        String       @default("Programming") // "Programming" or "Theory"
   difficulty  String       @default("Medium") // Easy, Medium, Hard
   title       String
   description String
   testCases   Json?    
+  metadata    Json?        // For expected_keywords, scoring_rubric, detailed_answer
   submissions Submission[] // Relation to track who solved it
 }
 
@@ -43,8 +45,10 @@ model Submission {
   id          String   @id @default(uuid())
   userId      String
   questionId  String
-  status      String   // e.g., "Pass", "Fail"
-  code        String
+  status      String   // e.g., "Pass", "Fail", "Evaluated"
+  score       Int?     // For theory questions out of 100
+  feedback    String?  // LLM feedback for theory questions
+  code        String   // Can store the text answer for theory questions
   language    String
   submittedAt DateTime @default(now())
 
