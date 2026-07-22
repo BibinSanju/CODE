@@ -241,7 +241,7 @@ def main():
         (InterviewBitScraper("Computer Networks"), "https://www.interviewbit.com/networking-interview-questions/"),
         
         # Cloud Computing
-        (SimplilearnScraper("Cloud Computing"), "https://www.simplilearn.com/cloud-computing-interview-questions-article"),
+        (GeeksForGeeksScraper("Cloud Computing"), "https://www.geeksforgeeks.org/cloud-computing-interview-questions/"),
         
         # Operating Systems
         (InterviewBitScraper("Operating Systems"), "https://www.interviewbit.com/operating-system-interview-questions/"),

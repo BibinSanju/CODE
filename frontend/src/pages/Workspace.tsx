@@ -17,6 +17,7 @@ interface Question {
   difficulty?: string;
   testCases?: any;
   type?: string;
+  metadata?: any;
 }
 
 const LANGUAGES = [
@@ -46,6 +47,7 @@ export default function Workspace() {
   const [textAnswer, setTextAnswer] = useState('');
   const [theoryScore, setTheoryScore] = useState<number | null>(null);
   const [theoryFeedback, setTheoryFeedback] = useState<string>('');
+  const [showReferenceAnswer, setShowReferenceAnswer] = useState(false);
 
   useEffect(() => {
     const fetchQuestion = async () => {
@@ -74,17 +76,24 @@ export default function Workspace() {
     setCode(lang.defaultCode);
   };
 
+  const isTheory = question ? (
+    question.type?.toLowerCase() === 'theory' || 
+    ['system design', 'sysdesign', 'dbms', 'db', 'databases', 'machine learning', 'ml', 'ml-dl', 'ml/dl', 'cyber security', 'sec', 'cloud computing', 'cloud', 'computer networks', 'cn', 'operating systems', 'os'].includes(question.category.toLowerCase())
+  ) : false;
+
+  const isCodingProblem = !isTheory;
+
   const handleRunOrSubmit = async (isSubmit: boolean) => {
     if (!isAuthenticated) {
-      alert("Please login to run code");
+      alert("Please login to participate");
       return;
     }
     
     setIsRunning(true);
     
     // Theory Evaluation Flow
-    if (question?.type === 'Theory') {
-      setOutput('Evaluating answer...');
+    if (isTheory) {
+      setOutput('Evaluating answer with AI...');
       setTheoryScore(null);
       setTheoryFeedback('');
       try {
@@ -150,7 +159,7 @@ export default function Workspace() {
     );
   }
 
-  const isCodingProblem = question.type !== 'Theory';
+  // Handled above via isCodingProblem
 
   return (
     <div className="workspace-container">
@@ -331,7 +340,7 @@ export default function Workspace() {
           className="split-wrapper"
         >
           {/* Left Pane: Theory Problem Description */}
-          <div className="problem-pane glass-panel single-pane">
+          <div className="problem-pane glass-panel single-pane overflow-y-auto">
             <div className="pane-header">
               <h2 className="problem-title">{question.title}</h2>
               <div className="problem-meta">
@@ -339,61 +348,83 @@ export default function Workspace() {
                   {question.difficulty || 'Medium'}
                 </span>
                 <span className="category-tag">{question.category}</span>
-                <span className="type-tag bg-purple-500 text-white px-2 py-1 rounded text-xs ml-2 font-bold">Theory</span>
+                <span className="type-tag bg-purple-600 text-white px-2.5 py-0.5 rounded-full text-xs font-semibold ml-2">Theory</span>
               </div>
             </div>
-            <div className="pane-content problem-description" dangerouslySetInnerHTML={{ __html: question.description }}>
+            <div className="pane-content problem-description">
+              <div className="prose prose-invert max-w-none text-gray-200" dangerouslySetInnerHTML={{ __html: question.description }} />
+              
+              {/* Optional Reference Answer toggle */}
+              {question.metadata?.detailed_answer && (
+                <div className="mt-6 pt-4 border-t border-gray-800">
+                  <button 
+                    className="btn-secondary btn-sm text-xs" 
+                    onClick={() => setShowReferenceAnswer(!showReferenceAnswer)}
+                  >
+                    {showReferenceAnswer ? 'Hide Reference Answer' : 'View Scraped Reference Answer'}
+                  </button>
+                  {showReferenceAnswer && (
+                    <div className="mt-3 p-4 bg-black bg-opacity-40 rounded-lg text-sm text-gray-300 whitespace-pre-wrap border border-gray-800">
+                      <strong className="text-purple-400 block mb-2">Reference Answer:</strong>
+                      {question.metadata.detailed_answer}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Right Pane: Text Editor & AI Evaluation Console */}
           <div className="editor-pane">
             <Split
-              sizes={[60, 40]}
+              sizes={[65, 35]}
               minSize={100}
               direction="vertical"
               className="vertical-split-wrapper"
               gutterSize={8}
             >
               <div className="editor-container glass-panel flex flex-col h-full">
-                <div className="pane-header flex-between" style={{ padding: '8px 16px' }}>
-                  <div className="text-white font-semibold">Your Answer</div>
-                  <div className="editor-actions">
-                    <button className="btn-secondary flex-center btn-sm" onClick={() => setTextAnswer('')}>Clear</button>
-                    <button className="btn-submit flex-center btn-sm" onClick={() => handleRunOrSubmit(true)} disabled={isRunning}>
-                      <Check size={14} className="mr-2" />
+                <div className="pane-header flex-between" style={{ padding: '10px 16px' }}>
+                  <span className="text-white font-semibold text-sm">Your Answer</span>
+                  <div className="editor-actions flex gap-2">
+                    <button className="btn-secondary btn-sm" onClick={() => setTextAnswer('')}>Clear</button>
+                    <button className="btn-submit flex-center btn-sm bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-4 py-1.5 rounded-md font-medium" onClick={() => handleRunOrSubmit(true)} disabled={isRunning}>
+                      <Check size={14} className="mr-1.5" />
                       {isRunning ? 'Evaluating...' : 'Submit Answer'}
                     </button>
                   </div>
                 </div>
-                <div className="flex-1 p-2 h-full">
+                <div className="flex-1 p-3 h-full flex flex-col">
                   <textarea 
-                    className="w-full h-full bg-black bg-opacity-40 text-white border-none resize-none p-4 font-sans text-base outline-none focus:ring-1 focus:ring-blue-500 rounded-md"
-                    placeholder="Write your explanation or system design answer here..."
+                    className="w-full h-full bg-black bg-opacity-50 text-gray-100 border border-gray-800 resize-none p-4 font-sans text-sm leading-relaxed outline-none focus:border-purple-500 rounded-lg"
+                    placeholder="Type your explanation or system design answer here..."
                     value={textAnswer}
                     onChange={(e) => setTextAnswer(e.target.value)}
                   />
                 </div>
               </div>
 
-              <div className="console-container glass-panel">
+              <div className="console-container glass-panel flex flex-col overflow-hidden">
                 <div className="pane-header">
-                  <span className="console-title">AI Evaluation</span>
+                  <span className="console-title">AI Evaluation Results</span>
                 </div>
-                <div className="console-output p-4">
-                  {output && <pre>{output}</pre>}
+                <div className="console-output p-4 overflow-y-auto flex-1">
+                  {output && <div className="text-purple-400 animate-pulse font-medium">{output}</div>}
                   {theoryScore !== null && (
                     <div className="evaluation-results">
-                      <div className={`text-2xl font-bold mb-4 ${theoryScore >= 70 ? 'text-green-500' : 'text-yellow-500'}`}>
-                        Score: {theoryScore} / 100
+                      <div className={`text-xl font-bold mb-3 flex items-center gap-2 ${theoryScore >= 70 ? 'text-green-400' : 'text-amber-400'}`}>
+                        <span>Score: {theoryScore} / 100</span>
+                        <span className="text-xs px-2 py-0.5 rounded bg-black bg-opacity-40 border border-current">
+                          {theoryScore >= 80 ? 'Excellent' : theoryScore >= 60 ? 'Good' : 'Needs Improvement'}
+                        </span>
                       </div>
-                      <div className="text-white whitespace-pre-wrap leading-relaxed text-sm bg-black bg-opacity-30 p-4 rounded-md">
+                      <div className="text-gray-200 whitespace-pre-wrap leading-relaxed text-sm bg-black bg-opacity-40 p-4 rounded-lg border border-gray-800">
                         {theoryFeedback}
                       </div>
                     </div>
                   )}
                   {theoryScore === null && !output && (
-                    <div className="text-muted italic">Submit your answer to get an AI evaluation.</div>
+                    <div className="text-gray-400 text-sm italic">Enter your answer above and click <span className="text-purple-400 font-semibold">Submit Answer</span> to receive AI grading & feedback.</div>
                   )}
                 </div>
               </div>
