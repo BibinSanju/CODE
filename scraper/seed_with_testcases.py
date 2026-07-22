@@ -21,7 +21,11 @@ Analyze the following LeetCode problem description and generate exactly 2 valid 
 Your output MUST be ONLY valid JSON matching this exact structure (an array of objects).
 Do not include any explanation, intro, or markdown formatting (no ```json or ``` blocks, just raw JSON).
 
-CRITICAL INSTRUCTION: The `input` and `expectedOutput` values MUST be formatted as single raw strings for Standard Input (stdin) and Standard Output (stdout), exactly like Codeforces or HackerRank test cases. Do NOT output a JSON object or array for the input/expectedOutput fields. They must be raw text strings with newline characters (\\n) separating variables.
+CRITICAL INSTRUCTION: The `input` and `expectedOutput` values MUST be formatted as single raw strings for Standard Input (stdin) and Standard Output (stdout), exactly like Codeforces or HackerRank test cases. 
+- Do NOT output a JSON object or array for the input/expectedOutput fields. They must be raw text strings with newline characters (\\n) separating variables.
+- NEVER use brackets `[]` or commas `,` in the strings.
+- For arrays/lists, output the size of the array first, followed by the elements separated by spaces (e.g., `3\\n1 2 3\\n`).
+- For 2D arrays, output the number of rows and columns, followed by the elements.
 
 Example JSON structure:
 [
