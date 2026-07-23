@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Download, AlertCircle, CheckSquare, Square } from 'lucide-react';
+import { Download, AlertCircle, CheckSquare, Square, ChevronDown, ChevronRight } from 'lucide-react';
 import './Export.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'https://intelx-148e.onrender.com';
@@ -8,6 +8,7 @@ const API_BASE = import.meta.env.VITE_API_BASE || 'https://intelx-148e.onrender.
 interface Question {
   id: string;
   category: string;
+  subtopic?: string;
   title: string;
   description: string;
   testCases?: any;
@@ -18,7 +19,6 @@ export default function Export() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [groupBy, setGroupBy] = useState<'topic' | 'company'>('topic');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -39,42 +39,39 @@ export default function Export() {
     fetchQuestions();
   }, []);
 
-  // Group questions by subtopic or company
+  // Group questions by subtopic
   const groupedQuestions = questions.reduce((acc, q) => {
-    if (groupBy === 'topic') {
-      const topic = q.subtopic || q.category || 'General';
-      if (!acc[topic]) acc[topic] = [];
-      acc[topic].push(q);
-    } else {
-      if (!q.companies || q.companies.length === 0) {
-        const company = 'Uncategorized';
-        if (!acc[company]) acc[company] = [];
-        acc[company].push(q);
-      } else {
-        q.companies.forEach(company => {
-          if (!acc[company]) acc[company] = [];
-          acc[company].push(q);
-        });
-      }
+    const topic = q.subtopic || q.category || 'General';
+    if (!acc[topic]) {
+      acc[topic] = [];
     }
+    acc[topic].push(q);
     return acc;
   }, {} as Record<string, Question[]>);
 
-  const toggleGroup = (group: string) => {
-    const newSet = new Set(expandedGroups);
-    if (newSet.has(group)) newSet.delete(group);
-    else newSet.add(group);
-    setExpandedGroups(newSet);
+  const toggleGroupExpand = (topic: string) => {
+    const newExpanded = new Set(expandedGroups);
+    if (newExpanded.has(topic)) {
+      newExpanded.delete(topic);
+    } else {
+      newExpanded.add(topic);
+    }
+    setExpandedGroups(newExpanded);
   };
 
-  const toggleSelectAll = (groupQuestions: Question[]) => {
-    const allSelected = groupQuestions.every(q => selectedIds.has(q.id));
-    const newSet = new Set(selectedIds);
-    groupQuestions.forEach(q => {
-      if (allSelected) newSet.delete(q.id);
-      else newSet.add(q.id);
-    });
-    setSelectedIds(newSet);
+  const toggleGroupSelect = (topic: string, groupQuestions: Question[]) => {
+    const groupIds = groupQuestions.map(q => q.id);
+    const allSelected = groupIds.every(id => selectedIds.has(id));
+    
+    const newSelected = new Set(selectedIds);
+    if (allSelected) {
+      // Deselect all
+      groupIds.forEach(id => newSelected.delete(id));
+    } else {
+      // Select all
+      groupIds.forEach(id => newSelected.add(id));
+    }
+    setSelectedIds(newSelected);
   };
 
   const toggleSelect = (id: string) => {
@@ -108,6 +105,8 @@ export default function Export() {
     selected.forEach((q) => {
       txtContent += `Title: ${q.title}\n`;
       txtContent += `Category: ${q.category}\n`;
+      txtContent += `Subtopic: ${q.subtopic || 'N/A'}
+`;
       txtContent += `Description:\n${q.description.replace(/<[^>]+>/g, '')}\n\n`;
 
       if (q.testCases && Array.isArray(q.testCases)) {
@@ -226,50 +225,75 @@ ${testcasesXml}
           <span>Loading questions...</span>
         </div>
       ) : (
-        <div className="table-container glass-panel">
-          <table className="export-table">
-            <thead>
-              <tr>
-                <th className="checkbox-col" onClick={toggleSelectAll} style={{cursor: 'pointer'}}>
-                  {selectedIds.size === questions.length && questions.length > 0 ? (
-                    <CheckSquare size={18} className="text-primary" />
-                  ) : (
-                    <Square size={18} className="text-secondary" />
-                  )}
-                </th>
-                <th>Title</th>
-                <th>Category</th>
-              </tr>
-            </thead>
-            <tbody>
-              {questions.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="empty-state">No questions found.</td>
-                </tr>
-              ) : (
-                questions.map((q) => {
-                  const isSelected = selectedIds.has(q.id);
-                  return (
-                    <tr 
-                      key={q.id} 
-                      className={`export-row ${isSelected ? 'selected' : ''}`}
-                      onClick={() => toggleSelect(q.id)}
+        <div className="groups-container">
+          {Object.keys(groupedQuestions).length === 0 ? (
+            <div className="empty-state glass-panel">No questions found.</div>
+          ) : (
+            Object.entries(groupedQuestions).map(([topic, groupQs]) => {
+              const groupIds = groupQs.map(q => q.id);
+              const allSelected = groupIds.every(id => selectedIds.has(id));
+              const someSelected = groupIds.some(id => selectedIds.has(id));
+              const isExpanded = expandedGroups.has(topic);
+
+              return (
+                <div key={topic} className="topic-group glass-panel">
+                  <div className="topic-header">
+                    <div 
+                      className="topic-checkbox"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleGroupSelect(topic, groupQs);
+                      }}
                     >
-                      <td className="checkbox-col">
-                        {isSelected ? (
-                          <CheckSquare size={18} className="text-primary" />
-                        ) : (
-                          <Square size={18} className="text-secondary" />
-                        )}
-                      </td>
-                      <td className="font-medium">{q.title}</td>
-                      <td><span className="category-tag">{q.category}</span></td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                      {allSelected ? (
+                        <CheckSquare size={20} className="text-primary" />
+                      ) : someSelected ? (
+                        <Square size={20} className="text-primary" style={{ opacity: 0.7 }} />
+                      ) : (
+                        <Square size={20} className="text-secondary" />
+                      )}
+                    </div>
+                    <div 
+                      className="topic-title-area"
+                      onClick={() => toggleGroupExpand(topic)}
+                    >
+                      <h3 className="topic-title">{topic} <span className="topic-count">({groupQs.length})</span></h3>
+                      {isExpanded ? <ChevronDown size={20} className="text-secondary" /> : <ChevronRight size={20} className="text-secondary" />}
+                    </div>
+                  </div>
+
+                  {isExpanded && (
+                    <div className="topic-content">
+                      <table className="export-table nested-table">
+                        <tbody>
+                          {groupQs.map((q) => {
+                            const isSelected = selectedIds.has(q.id);
+                            return (
+                              <tr 
+                                key={q.id} 
+                                className={`export-row ${isSelected ? 'selected' : ''}`}
+                                onClick={() => toggleSelect(q.id)}
+                              >
+                                <td className="checkbox-col">
+                                  {isSelected ? (
+                                    <CheckSquare size={18} className="text-primary" />
+                                  ) : (
+                                    <Square size={18} className="text-secondary" />
+                                  )}
+                                </td>
+                                <td className="font-medium">{q.title}</td>
+                                <td><span className="category-tag">{q.category}</span></td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
         </div>
       )}
     </div>
