@@ -1,0 +1,83 @@
+.export-container {
+  padding-top: 2rem;
+  padding-bottom: 4rem;
+}
+
+.export-header {
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.export-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.export-actions button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.export-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.table-container {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.export-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.export-table th,
+.export-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.export-table th {
+  background-color: rgba(0, 0, 0, 0.2);
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.export-row {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.export-row:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.export-row.selected {
+  background-color: rgba(99, 102, 241, 0.1);
+}
+
+.checkbox-col {
+  width: 50px;
+  text-align: center;
+}
+
+.text-primary {
+  color: var(--accent-primary);
+}
+
+.text-secondary {
+  color: var(--text-muted);
+}
+
+.font-medium {
+  font-weight: 500;
+}

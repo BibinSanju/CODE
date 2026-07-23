@@ -22,6 +22,7 @@ export default function Navbar() {
         
         <div className="nav-links flex-center">
           <Link to="/problems" className="nav-link">Problems</Link>
+          <Link to="/export" className="nav-link">Export</Link>
           
           {isAuthenticated ? (
             <div className="auth-group flex-center">
