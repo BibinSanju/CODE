@@ -19,6 +19,7 @@ export default function Export() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [groupBy, setGroupBy] = useState<'topic' | 'company'>('topic');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -39,13 +40,22 @@ export default function Export() {
     fetchQuestions();
   }, []);
 
-  // Group questions by subtopic
+  // Group questions dynamically based on groupBy state
   const groupedQuestions = questions.reduce((acc, q) => {
-    const topic = q.subtopic || q.category || 'General';
-    if (!acc[topic]) {
-      acc[topic] = [];
+    if (groupBy === 'topic') {
+      const topic = q.subtopic || q.category || 'General';
+      if (!acc[topic]) acc[topic] = [];
+      acc[topic].push(q);
+    } else if (groupBy === 'company') {
+      const companies = q.companies && q.companies.length > 0 ? q.companies : ['No Company'];
+      companies.forEach(company => {
+        if (!acc[company]) acc[company] = [];
+        // Prevent duplicate pushes if a question has duplicate company tags somehow
+        if (!acc[company].find(existing => existing.id === q.id)) {
+          acc[company].push(q);
+        }
+      });
     }
-    acc[topic].push(q);
     return acc;
   }, {} as Record<string, Question[]>);
 
