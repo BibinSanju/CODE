@@ -8,6 +8,7 @@ import CategoryView from './pages/CategoryView';
 import ProblemsList from './pages/ProblemsList';
 import Workspace from './pages/Workspace';
 import Profile from './pages/Profile';
+import Export from './pages/Export';
 import { useAuthStore } from './store/useAuthStore';
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
             />
             <Route path="/problems" element={<ProblemsList />} />
             <Route path="/problems/:id" element={<Workspace />} />
+            <Route path="/export" element={<Export />} />
             <Route 
               path="/profile" 
               element={isAuthenticated ? <Profile /> : <Navigate to="/login" replace />} 
