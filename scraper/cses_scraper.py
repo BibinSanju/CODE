@@ -15,11 +15,13 @@ def get_cses_problems():
     
     problems = []
     
-    # Grab the first chapter (Introductory Problems)
-    task_list = soup.find('ul', class_='task-list')
-    if not task_list:
-        print("Could not find task list")
+    # Grab the first chapter (Introductory Problems) which is the second task-list
+    task_lists = soup.find_all('ul', class_='task-list')
+    if len(task_lists) < 2:
+        print("Could not find problem task list")
         return []
+        
+    task_list = task_lists[1]
         
     for li in task_list.find_all('li', class_='task'):
         a_tag = li.find('a')

@@ -11,11 +11,14 @@ interface Question {
   title: string;
   description: string;
   testCases?: any;
+  companies?: string[];
 }
 
 export default function Export() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const [groupBy, setGroupBy] = useState<'topic' | 'company'>('topic');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -36,21 +39,48 @@ export default function Export() {
     fetchQuestions();
   }, []);
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === questions.length) {
-      setSelectedIds(new Set());
+  // Group questions by subtopic or company
+  const groupedQuestions = questions.reduce((acc, q) => {
+    if (groupBy === 'topic') {
+      const topic = q.subtopic || q.category || 'General';
+      if (!acc[topic]) acc[topic] = [];
+      acc[topic].push(q);
     } else {
-      setSelectedIds(new Set(questions.map((q) => q.id)));
+      if (!q.companies || q.companies.length === 0) {
+        const company = 'Uncategorized';
+        if (!acc[company]) acc[company] = [];
+        acc[company].push(q);
+      } else {
+        q.companies.forEach(company => {
+          if (!acc[company]) acc[company] = [];
+          acc[company].push(q);
+        });
+      }
     }
+    return acc;
+  }, {} as Record<string, Question[]>);
+
+  const toggleGroup = (group: string) => {
+    const newSet = new Set(expandedGroups);
+    if (newSet.has(group)) newSet.delete(group);
+    else newSet.add(group);
+    setExpandedGroups(newSet);
+  };
+
+  const toggleSelectAll = (groupQuestions: Question[]) => {
+    const allSelected = groupQuestions.every(q => selectedIds.has(q.id));
+    const newSet = new Set(selectedIds);
+    groupQuestions.forEach(q => {
+      if (allSelected) newSet.delete(q.id);
+      else newSet.add(q.id);
+    });
+    setSelectedIds(newSet);
   };
 
   const toggleSelect = (id: string) => {
     const newSet = new Set(selectedIds);
-    if (newSet.has(id)) {
-      newSet.delete(id);
-    } else {
-      newSet.add(id);
-    }
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
     setSelectedIds(newSet);
   };
 
@@ -66,7 +96,7 @@ export default function Export() {
     URL.revokeObjectURL(url);
   };
 
-    const exportJSON = () => {
+  const exportJSON = () => {
     const selected = questions.filter((q) => selectedIds.has(q.id));
     downloadFile('intelx_export.json', JSON.stringify(selected, null, 2), 'application/json');
   };
@@ -78,7 +108,7 @@ export default function Export() {
     selected.forEach((q) => {
       txtContent += `Title: ${q.title}\n`;
       txtContent += `Category: ${q.category}\n`;
-      txtContent += `Description:\n${q.description.replace(/<[^>]+>/g, '')}\n\n`; // Strip HTML tags for clean text
+      txtContent += `Description:\n${q.description.replace(/<[^>]+>/g, '')}\n\n`;
 
       if (q.testCases && Array.isArray(q.testCases)) {
         txtContent += `Test Cases:\n`;
@@ -140,8 +170,24 @@ ${testcasesXml}
       <div className="export-header flex-between">
         <div>
           <h1 className="page-title text-gradient">Bulk Export</h1>
-          <p className="page-subtitle">Download questions for your LMS or Moodle portal.</p>
+          <p className="page-subtitle">Download grouped questions for your LMS or Moodle portal.</p>
         </div>
+        
+        <div className="group-toggle">
+          <button 
+            className={`toggle-btn ${groupBy === 'topic' ? 'active' : ''}`}
+            onClick={() => { setGroupBy('topic'); setExpandedGroups(new Set()); }}
+          >
+            By Topic
+          </button>
+          <button 
+            className={`toggle-btn ${groupBy === 'company' ? 'active' : ''}`}
+            onClick={() => { setGroupBy('company'); setExpandedGroups(new Set()); }}
+          >
+            By Company
+          </button>
+        </div>
+
         <div className="export-actions">
           <button 
             className="btn-secondary" 
