@@ -8,6 +8,7 @@ import { Pool } from 'pg'
 import { PGlite } from '@electric-sql/pglite'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { Groq } from 'groq-sdk'
 
 // Prisma 7 explicit connection adapter
 const pool = new Pool({
@@ -254,6 +255,77 @@ app.post('/execute/code', async (c) => {
   } catch (error) {
     console.error('Code execution error:', error)
     return c.json({ success: false, error: 'Code execution failed' }, 500)
+  }
+})
+
+// Phase 3: Theory Question Evaluation API
+app.post('/evaluate-theory', async (c) => {
+  try {
+    const { questionId, answer, userId } = await c.req.json()
+
+    const question = await prisma.question.findUnique({ where: { id: questionId } })
+    if (!question || !question.metadata) {
+      return c.json({ success: false, error: 'Question or metadata not found' }, 404)
+    }
+
+    const metadata: any = question.metadata
+    const expectedAnswer = metadata.detailed_answer || metadata.concise_answer || ""
+    const rubric = metadata.scoring_rubric || {}
+
+    const groq_api_key = process.env.GROQ_API_KEY
+    if (!groq_api_key) {
+      return c.json({ success: false, error: 'Groq API key is missing' }, 500)
+    }
+
+    const groq = new Groq({ apiKey: groq_api_key })
+
+    const prompt = `You are an expert technical interviewer evaluating a candidate's answer to a theory/system design question.
+Question: ${question.title}
+Expected Answer/Concepts: ${expectedAnswer}
+Scoring Rubric: ${JSON.stringify(rubric)}
+
+Candidate's Answer:
+${answer}
+
+Evaluate the candidate's answer based on the rubric and expected concepts.
+Output ONLY a JSON object exactly matching this structure, with no markdown formatting:
+{
+  "accuracyScore": <number 0-100>,
+  "feedback": "<string explaining the score and what was good/missing>"
+}
+`
+
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ role: "user", content: prompt }],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.1,
+    })
+
+    let responseText = chatCompletion.choices[0].message.content?.trim() || "{}"
+    if (responseText.startsWith("\`\`\`json")) responseText = responseText.replace("\`\`\`json", "").trim()
+    if (responseText.startsWith("\`\`\`")) responseText = responseText.replace("\`\`\`", "").trim()
+    if (responseText.endsWith("\`\`\`")) responseText = responseText.replace(/\`\`\`$/, "").trim()
+
+    const evaluation = JSON.parse(responseText)
+
+    if (userId) {
+      await prisma.submission.create({
+        data: {
+          userId,
+          questionId,
+          status: 'Evaluated',
+          code: answer,
+          language: 'Text',
+          score: evaluation.accuracyScore,
+          feedback: evaluation.feedback
+        }
+      })
+    }
+
+    return c.json({ success: true, data: evaluation })
+  } catch (error: any) {
+    console.error('Theory evaluation error:', error)
+    return c.json({ success: false, error: 'Evaluation failed: ' + (error.message || 'Unknown error') }, 500)
   }
 })
 
