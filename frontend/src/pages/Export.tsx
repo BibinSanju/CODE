@@ -12,6 +12,7 @@ interface Question {
   title: string;
   description: string;
   testCases?: any;
+  companies?: string[];
 }
 
 export default function Export() {
@@ -75,11 +76,8 @@ export default function Export() {
 
   const toggleSelect = (id: string) => {
     const newSet = new Set(selectedIds);
-    if (newSet.has(id)) {
-      newSet.delete(id);
-    } else {
-      newSet.add(id);
-    }
+    if (newSet.has(id)) newSet.delete(id);
+    else newSet.add(id);
     setSelectedIds(newSet);
   };
 
@@ -107,7 +105,8 @@ export default function Export() {
     selected.forEach((q) => {
       txtContent += `Title: ${q.title}\n`;
       txtContent += `Category: ${q.category}\n`;
-      txtContent += `Subtopic: ${q.subtopic || 'N/A'}\n`;
+      txtContent += `Subtopic: ${q.subtopic || 'N/A'}
+`;
       txtContent += `Description:\n${q.description.replace(/<[^>]+>/g, '')}\n\n`;
 
       if (q.testCases && Array.isArray(q.testCases)) {
@@ -172,6 +171,22 @@ ${testcasesXml}
           <h1 className="page-title text-gradient">Bulk Export</h1>
           <p className="page-subtitle">Download grouped questions for your LMS or Moodle portal.</p>
         </div>
+        
+        <div className="group-toggle">
+          <button 
+            className={`toggle-btn ${groupBy === 'topic' ? 'active' : ''}`}
+            onClick={() => { setGroupBy('topic'); setExpandedGroups(new Set()); }}
+          >
+            By Topic
+          </button>
+          <button 
+            className={`toggle-btn ${groupBy === 'company' ? 'active' : ''}`}
+            onClick={() => { setGroupBy('company'); setExpandedGroups(new Set()); }}
+          >
+            By Company
+          </button>
+        </div>
+
         <div className="export-actions">
           <button 
             className="btn-secondary" 
