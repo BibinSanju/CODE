@@ -110,3 +110,6 @@ Thumbs.db
 .windsurf/
 .gemini/
 .cursor/
+
+# Temporary local clone for GitHub Actions
+scraper/leetcode-company-wise-problems/

@@ -8,6 +8,7 @@ import { Pool } from 'pg';
 import { PGlite } from '@electric-sql/pglite';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { Groq } from 'groq-sdk';
 // Prisma 7 explicit connection adapter
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL
@@ -21,7 +22,7 @@ console.log(`Server is running on port ${port}`);
 app.use('/*', cors({
     origin: [
         'http://localhost:5173',
-        'https://your-frontend-project.vercel.app'
+        'https://intelxf.vercel.app'
     ],
     allowHeaders: ['Content-Type', 'Authorization'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -234,6 +235,70 @@ app.post('/execute/code', async (c) => {
         return c.json({ success: false, error: 'Code execution failed' }, 500);
     }
 });
+// Phase 3: Theory Question Evaluation API
+app.post('/evaluate-theory', async (c) => {
+    try {
+        const { questionId, answer, userId } = await c.req.json();
+        const question = await prisma.question.findUnique({ where: { id: questionId } });
+        if (!question || !question.metadata) {
+            return c.json({ success: false, error: 'Question or metadata not found' }, 404);
+        }
+        const metadata = question.metadata;
+        const expectedAnswer = metadata.detailed_answer || metadata.concise_answer || "";
+        const rubric = metadata.scoring_rubric || {};
+        const groq_api_key = process.env.GROQ_API_KEY;
+        if (!groq_api_key) {
+            return c.json({ success: false, error: 'Groq API key is missing' }, 500);
+        }
+        const groq = new Groq({ apiKey: groq_api_key });
+        const prompt = `You are an expert technical interviewer evaluating a candidate's answer to a theory/system design question.
+Question: ${question.title}
+Expected Answer/Concepts: ${expectedAnswer}
+Scoring Rubric: ${JSON.stringify(rubric)}
+
+Candidate's Answer:
+${answer}
+
+Evaluate the candidate's answer based on the rubric and expected concepts.
+Output ONLY a JSON object exactly matching this structure, with no markdown formatting:
+{
+  "accuracyScore": <number 0-100>,
+  "feedback": "<string explaining the score and what was good/missing>"
+}
+`;
+        const chatCompletion = await groq.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
+            model: "llama-3.3-70b-versatile",
+            temperature: 0.1,
+        });
+        let responseText = chatCompletion.choices[0].message.content?.trim() || "{}";
+        if (responseText.startsWith("\`\`\`json"))
+            responseText = responseText.replace("\`\`\`json", "").trim();
+        if (responseText.startsWith("\`\`\`"))
+            responseText = responseText.replace("\`\`\`", "").trim();
+        if (responseText.endsWith("\`\`\`"))
+            responseText = responseText.replace(/\`\`\`$/, "").trim();
+        const evaluation = JSON.parse(responseText);
+        if (userId) {
+            await prisma.submission.create({
+                data: {
+                    userId,
+                    questionId,
+                    status: 'Evaluated',
+                    code: answer,
+                    language: 'Text',
+                    score: evaluation.accuracyScore,
+                    feedback: evaluation.feedback
+                }
+            });
+        }
+        return c.json({ success: true, data: evaluation });
+    }
+    catch (error) {
+        console.error('Theory evaluation error:', error);
+        return c.json({ success: false, error: 'Evaluation failed: ' + (error.message || 'Unknown error') }, 500);
+    }
+});
 // Phase 3: Piston Code Submit API (Runs against test cases)
 app.post('/execute/submit', async (c) => {
     try {
@@ -250,67 +315,32 @@ app.post('/execute/submit', async (c) => {
         let allPassed = true;
         for (let i = 0; i < testCases.length; i++) {
             const tc = testCases[i];
-            let wrapperCode = code;
-            // Inject wrapper based on language to call solution function and print output
-            if (language === 'javascript') {
-                wrapperCode = `
-${code}
-const input = ${JSON.stringify(tc.input)};
-const result = solution(input.nums, input.target);
-console.log(JSON.stringify(result));
-`;
-            }
-            else if (language === 'python') {
-                wrapperCode = `
-import json
-${code}
-input_data = json.loads('${JSON.stringify(tc.input)}')
-try:
-    if 'nums' in input_data and 'target' in input_data:
-        result = solution(input_data['nums'], input_data['target'])
-    else:
-        result = solution(**input_data)
-    print(json.dumps(result))
-except Exception as e:
-    import traceback
-    print("Error:", str(e))
-    traceback.print_exc()
-`;
-            }
-            else {
-                return c.json({ success: false, error: 'Test execution is currently only supported for JavaScript and Python.' });
-            }
             const EXECUTOR_URL = process.env.EXECUTOR_URL || 'https://my-free-executor.onrender.com';
             const response = await fetch(`${EXECUTOR_URL}/execute`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     language: language,
-                    code: wrapperCode
+                    code: code, // Pass the exact code the user wrote
+                    input: tc.input // Send the Standard IO input string
                 })
             });
             const result = await response.json();
             if (result.status === 'error') {
                 return c.json({ success: false, error: 'Execution Error: ' + result.output }, 500);
             }
-            const outputStr = result.output?.trim();
-            let actualOutput = outputStr;
-            try {
-                if (outputStr)
-                    actualOutput = JSON.parse(outputStr);
-            }
-            catch (e) { }
-            // Compare arrays/objects safely
-            const passed = JSON.stringify(actualOutput) === JSON.stringify(tc.expectedOutput);
+            const actualOutput = result.output?.trim() || "";
+            const expectedStr = (typeof tc.expectedOutput === 'string' ? tc.expectedOutput : JSON.stringify(tc.expectedOutput)).trim();
+            const passed = actualOutput === expectedStr;
             if (!passed)
                 allPassed = false;
             results.push({
                 testCase: i + 1,
                 input: tc.input,
-                expectedOutput: tc.expectedOutput,
+                expectedOutput: expectedStr,
                 actualOutput,
                 passed,
-                error: (actualOutput && typeof actualOutput === 'string' && actualOutput.includes('Error:')) ? actualOutput : undefined
+                error: undefined
             });
         }
         if (userId && !isRun) {

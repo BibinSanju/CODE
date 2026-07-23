@@ -38,6 +38,7 @@ model Question {
   description String
   testCases   Json?    
   metadata    Json?        // For expected_keywords, scoring_rubric, detailed_answer
+  companies   String[]     @default([]) // Companies that asked this question
   submissions Submission[] // Relation to track who solved it
 }
 
